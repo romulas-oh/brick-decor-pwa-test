@@ -1,48 +1,27 @@
-# Brick & Decor PWA v0.2 Test
+# Brick & Decor PWA v0.3 Usable Test
 
-This is the second-tier testing version for Brick & Decor.
+This is a frontend-only usable testing version.
 
-It is a static frontend demo with test data only. It does not have a real backend yet.
+## What is usable now
 
-## Included tabs
+- Create new client/case
+- Add/delete quotation items
+- Quotation price validation based on 30%–40% markup
+- Generate printable quotation
+- Add/delete project real cost
+- Add and approve VO
+- Add and approve PO
+- Tick DO handover checklist and record handover
+- Record invoice payments
+- Add warranty cases
+- Upload local image previews for warranty media
+- Edit master pricing settings and item master
+- Dashboard and Profit report update from test data
+- Export JSON demo data
+- Reset demo data
 
-- Dashboard
-- Clients / Case Opening
-- Quotation Builder with 30%–40% pricing validation
-- Projects / Real Cost
-- VO
-- PO
-- DO / Handover
-- Invoices & Payments
-- Warranty & Media
-- Profit & Commission
-- Master Data
+## Important
 
-## How to test locally
+This version uses browser LocalStorage only. Data is saved in the same browser, not in a real database.
 
-Open `index.html` directly in your browser.
-
-Or run:
-
-```bash
-python3 -m http.server 5173
-```
-
-Then open:
-
-```text
-http://localhost:5173
-```
-
-## GitHub Pages testing
-
-1. Create a new GitHub repository, for example `brick-decor-pwa-test`.
-2. Upload all files from this ZIP to the repository root.
-3. Go to Settings > Pages.
-4. Source: Deploy from a branch.
-5. Branch: main, folder: /root.
-6. Save and wait for the GitHub Pages URL.
-
-## Important note
-
-This is for UI and workflow testing only. The next stage should connect database, login, file storage, PDF generation, and real role permissions.
+The next stage should connect Supabase database, real login, real PDF generation, real file storage, and role permissions.
