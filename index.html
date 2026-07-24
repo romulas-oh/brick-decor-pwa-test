@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Brick & Decor PWA v0.3 Usable Test</title>
+<title>Brick & Decor PWA v0.3.1 Usable Test</title>
 <link rel="manifest" href="manifest.json">
 <style>
 :root{
@@ -112,7 +112,7 @@ function exportJSON(){ const blob=new Blob([JSON.stringify(state,null,2)],{type:
 function printDoc(title, body){ const w=window.open('','_blank'); w.document.write(`<html><head><title>${title}</title><style>body{font-family:Arial;margin:36px;color:#222}h1{color:#ff5b5f}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f7f7f7}.right{text-align:right}</style></head><body><h1>BRICK & DECOR</h1><h2>${title}</h2>${body}<script>window.print()<\/script></body></html>`); w.document.close(); }
 
 function layout(){
-  $('app').innerHTML = `<div class="app"><aside class="sidebar"><div class="brand"><div class="logo"></div><b>BRICK & DECOR</b></div><nav class="nav">${NAV.map(([id,ico,label])=>`<button class="${active===id?'active':''}" onclick="show('${id}')"><span>${ico}</span>${label}</button>`).join('')}</nav><div class="promo"><b>Usable Test v0.3</b><p>LocalStorage test version. Add, edit, delete, record payment, generate print documents and export data.</p></div></aside><main class="main"><div class="topbar"><input class="search" placeholder="Search anything..." oninput="filterText=this.value.toLowerCase();show(active)"><div class="user"><button class="btn small" onclick="exportJSON()">Export JSON</button><button class="btn small red" onclick="reset()">Reset</button><div class="avatar">A</div><div><b>Admin</b><div class="small">Superadmin</div></div></div></div><div class="content" id="content"></div></main></div>`;
+  $('app').innerHTML = `<div class="app"><aside class="sidebar"><div class="brand"><div class="logo"></div><b>BRICK & DECOR</b></div><nav class="nav">${NAV.map(([id,ico,label])=>`<button class="${active===id?'active':''}" onclick="show('${id}')"><span>${ico}</span>${label}</button>`).join('')}</nav><div class="promo"><b>Usable Test v0.3.1</b><p>LocalStorage test version. Add, edit, delete, record payment, generate print documents and export data.</p></div></aside><main class="main"><div class="topbar"><input class="search" placeholder="Search anything..." oninput="filterText=this.value.toLowerCase();show(active)"><div class="user"><button class="btn small" onclick="exportJSON()">Export JSON</button><button class="btn small red" onclick="reset()">Reset</button><div class="avatar">A</div><div><b>Admin</b><div class="small">Superadmin</div></div></div></div><div class="content" id="content"></div></main></div>`;
 }
 let filterText='';
 function show(id){active=id;layout();$('content').innerHTML=pages[id]();save();}
@@ -121,7 +121,7 @@ const pages={};
 pages.dashboard=()=>{
  const sales=state.quotes.reduce((a,q)=>a+quoteTotal(q),0)+state.vos.reduce((a,v)=>a+v.items.reduce((x,i)=>x+i.qty*i.price,0),0);
  const actual=state.costs.reduce((a,c)=>a+(+c.actual||0),0), warranty=state.warranties.reduce((a,w)=>a+(+w.actual||0),0), paid=state.invoices.reduce((a,i)=>a+invPaid(i),0), invTotal=state.invoices.reduce((a,i)=>a+i.amount,0);
- return head('Dashboard','Live test overview generated from local demo data.','Dashboard','<button class="btn primary" onclick="show(\\'clients\\')">+ New Case</button>')+
+ return head('Dashboard','Live test overview generated from local demo data.','Dashboard',"<button class='btn primary' onclick=\"show('clients')\">+ New Case</button>")+
  `<div class="grid kpis">${[['Total Sales',sales,'💼'],['Pending Payment',Math.max(invTotal-paid,0),'💰'],['Active Projects',state.projects.length,'🧰'],['Gross Profit',sales-actual-warranty,'📈'],['Warranty Cases',state.warranties.length,'🛡️'],['Commission Est.',Math.max((sales-actual)*.1,0),'💸']].map(x=>`<div class="card"><div>${x[2]}</div><div class="small">${x[0]}</div><div class="money">${typeof x[1]==='number'&&x[1]>50?money0(x[1]):x[1]}</div><div class="up">usable test data</div></div>`).join('')}</div>
  <div class="grid two" style="margin-top:16px"><div class="card"><h3>Project Status</h3><div class="donut"></div></div><div class="card"><h3>Payment Collection Progress</h3><div class="money">${money0(paid)}</div><div class="small">of ${money0(invTotal)}</div><br><div class="progress greenbar"><span style="width:${invTotal?paid/invTotal*100:0}%"></span></div><br><div class="grid three"><div><b>Paid</b><br>${money0(paid)}</div><div><b>Pending</b><br>${money0(Math.max(invTotal-paid,0))}</div><div><b>Overdue</b><br>${money0(Math.max(invTotal-paid-4000,0))}</div></div></div></div>
  <div class="card" style="margin-top:16px"><h3>Projects</h3>${projectTable()}</div>`;

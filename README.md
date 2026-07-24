@@ -1,6 +1,12 @@
-# Brick & Decor PWA v0.3 Usable Test
+# Brick & Decor PWA v0.3.1 Usable Test
 
-This is a frontend-only usable testing version.
+This is the fixed usable testing version.
+
+## Fixed
+
+- Fixed the blank white screen caused by a JavaScript quote escaping issue.
+- Updated service worker cache to v0.3.1.
+- Added cache cleanup so the old broken cached version can be replaced.
 
 ## What is usable now
 
@@ -24,4 +30,4 @@ This is a frontend-only usable testing version.
 
 This version uses browser LocalStorage only. Data is saved in the same browser, not in a real database.
 
-The next stage should connect Supabase database, real login, real PDF generation, real file storage, and role permissions.
+If the live GitHub Pages site still shows white after upload, clear the browser cache or open in incognito mode because the previous service worker may have cached the broken file.
