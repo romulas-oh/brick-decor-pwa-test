@@ -1,34 +1,28 @@
-# Brick & Decor PWA v0.5 Overview & Approval Test
+# Brick & Decor PWA v0.5.1 Premium UI Test
 
-Updated based on B&D L 1.1 amendment comments.
+Premium UI refresh based on user feedback.
 
-## Confirmed rules included
+## UI changes
 
-- Quotation follow-up reminder counts from last sent date.
-- Reminder triggers after 10 days by default.
-- Supplier invoice attachment is local file-name preview only for frontend testing.
-- Normal worker can create own case.
-- Normal worker sees only quotations/cases/projects created by them or assigned to them.
-- Closed cases/projects are hidden from normal worker unless Superadmin grants closed-project access.
-- Staff commission is visible only after Superadmin approval.
-- Warranty and photo/video/media upload are removed.
+- Removed sidebar icons.
+- Changed bright coral colour style to premium charcoal / dark navy / warm bronze.
+- Changed font feel from basic/childish to cleaner professional UI typography.
+- Upgraded sidebar, cards, buttons, tables, badges and forms.
+- Kept all v0.5 business logic and testing features unchanged.
 
-## New testable features
+## v0.5 features retained
 
-- Quotation Overview with company / ID / project / date / status filters.
-- Quotation detail builder with editable custom items and descriptions.
-- Quotation version history and last sent date.
-- Notifications tab for quotation follow-up and supplier verification.
-- Project Costing Overview with filters.
-- VO and DO moved under Project Costing detail.
-- Invoice Overview with filters and sub-tabs.
-- Payment trigger percentage warning.
-- PO / Supplier Aging sub-tabs.
-- Supplier invoice project link, local attachment field, verification approval, payment status and duplicate warning.
-- Profit & Commission filter by worker with Superadmin approval logic.
-- Users & Flexible Access permission matrix, company access and project visibility control.
-- 5 dummy companies in Company Master.
+- Quotation overview with filters.
+- Quotation follow-up reminder from last sent date.
+- Custom quotation item name and description.
+- Project Costing overview.
+- VO and DO inside Project Costing.
+- Invoice overview with filters and sub-tabs.
+- PO / Supplier Aging approval flow and duplicate warning.
+- Supplier invoice local attachment field.
+- Profit & Commission worker filter and approval visibility.
+- Users & Flexible Access permission matrix.
+- 5 dummy companies.
+- Warranty/photo/video/media removed.
 
-## Important
-
-This is frontend-only using browser LocalStorage. Real login, backend database, real file storage, server PDF generation and real permissions must be added in the backend stage.
+Frontend-only using browser LocalStorage.
