@@ -1,6 +1,6 @@
 {
-  "name": "Brick & Decor PWA v0.3.1 Usable Test",
-  "short_name": "BrickDecor031",
+  "name": "Brick & Decor PWA v0.4 Starter Test",
+  "short_name": "BrickDecor04",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f7f8fb",
