@@ -1,39 +1,36 @@
-# Brick & Decor PWA v0.6.2 Full Integrated Test
+# Brick & Decor PWA v0.7 Case-Centric Test
 
-This version is built from v0.5.1 Premium and keeps all previous modules.
+Built on v0.6.2. Previous features are retained; this version reorganises the workflow around the Case File.
 
-## Previous features retained
-- Dashboard
-- Notifications and quotation follow-up from last sent date
-- Clients / Cases
-- Quotation overview and filters
-- Project Costing overview
-- VO / DO / Manpower under Project Costing
-- Invoices & Payments overview
-- PO / Supplier Aging, attachment filename, verification, payment and duplicate warning
-- Profit & Commission with Superadmin approval
-- Master Data
-- Flexible Users & Access / company access / closed project visibility
-- Premium dark navy / warm bronze UI
-- Warranty module and photo/media module remain removed as previously requested
+## Confirmed v0.7 workflow
+- Case File is the centre of the project.
+- Fixed client/company/site data is entered once at Case creation.
+- Quotations and revisions inherit Case data.
+- Sent revisions save a snapshot.
+- Client approval can auto-change the Case to Project Confirmed; this rule is configurable in Master Data.
+- Supplier invoice is linked to a readable Case/Project.
+- Assigned ID is notified and is the default person allowed to approve/reject supplier invoice.
+- Approved supplier invoice posts once into Actual Project Cost as AUTO cost.
+- Superadmin/Accounts receives approved supplier invoice for payment.
+- ID submits Case Closure Request.
+- Only Superadmin can finalise Closed.
+- Closing saves a final financial snapshot.
+- Closed cases remain hidden from normal ID unless Superadmin grants closed-case access.
+- Commission remains subject to Superadmin approval.
 
-## Added in v0.6.2
-- Exact 4 company records from PWA.xlsx
-- 4 client-provided logos
-- Company-driven logo/UEN/GST/address/bank/PayNow/document prefix
-- Superadmin editable document templates per company
-- Quotation client/header data required by the sample
-- Area / Location + Work Section + Item + Description
-- Pricing types: Amount / Inclusive / Complimentary / F.O.C / Optional
-- Internal cost can be 0
-- Short document numbering
-- Quotation preview based on the supplied sample structure
-- Flexible Letter of Appointment
-- Auto payment schedule 10% / 45% / 40% / 5%, with first payment minimum $1,000
-- Staged invoice / official receipt generation
-- VO additional and cancellation items with original/new contract total
-- Handover House Key Form under DO/Handover
-- Scope / Work Section library
-- PayNow UEN mismatch review warning
+## UI improvements
+- Quotation builder uses clean presentation rows instead of showing every field as a thick input box.
+- Edit Item opens a focused modal.
+- Work Section Library is selectable from Master Data, with Custom/New option.
+- Direct quotation creation shows client + site + company instead of internal P1/P2.
+- User company access displays full company names, not BDC/BDW/BDN/AB codes.
+- PayNow mismatch warning is explained and Superadmin can mark the payment detail verified.
+- Company logos use absolute URLs in generated print previews.
 
-Frontend test only. Browser LocalStorage is used. Real backend, authentication, private file storage, immutable PDF archive and true server-side permissions come later.
+## Notifications
+- In-app workflow notifications are included.
+- Browser/PWA notification permission and local test notification are included.
+- For iPhone/iPad, install to Home Screen before enabling notifications.
+- True remote push from backend events will be added when authentication/backend is connected.
+
+Frontend-only test using browser LocalStorage. Real database, authentication, private attachments, remote push subscriptions and immutable PDF archive come later.

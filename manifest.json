@@ -1,6 +1,6 @@
 {
-  "name": "Brick & Decor PWA v0.6.2 Full Integrated Test",
-  "short_name": "BrickDecor062",
+  "name": "Brick & Decor PWA v0.7 Case-Centric Test",
+  "short_name": "BrickDecor07",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F6F4EF",
