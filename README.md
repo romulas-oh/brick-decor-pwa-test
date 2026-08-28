@@ -1,36 +1,39 @@
-# Brick & Decor PWA v0.6.1 Merged Full Test
+# Brick & Decor PWA v0.6.2 Full Integrated Test
 
-Correction version.
+This version is built from v0.5.1 Premium and keeps all previous modules.
 
-This version keeps all v0.5.1 features and adds the document structure from v0.6. No previous feature should be removed unless specifically requested.
-
-## Features retained from v0.5.1
-
+## Previous features retained
 - Dashboard
-- Notifications
-- Companies
+- Notifications and quotation follow-up from last sent date
 - Clients / Cases
 - Quotation overview and filters
-- Project Costing overview and filters
-- Invoice overview and filters
-- PO / Supplier Aging
-- Profit & Commission
+- Project Costing overview
+- VO / DO / Manpower under Project Costing
+- Invoices & Payments overview
+- PO / Supplier Aging, attachment filename, verification, payment and duplicate warning
+- Profit & Commission with Superadmin approval
 - Master Data
-- Users & Flexible Access
-- Supplier invoice approval and payment flow
-- Commission approval visibility
-- Project visibility rules
-- Premium UI
+- Flexible Users & Access / company access / closed project visibility
+- Premium dark navy / warm bronze UI
+- Warranty module and photo/media module remain removed as previously requested
 
-## Added from document study
-
-- Document Templates tab
-- Quotation structure: Area / Location → Work Section → Item / Description
-- Pricing Type: Amount / Inclusive / Complimentary / F.O.C / Optional
+## Added in v0.6.2
+- Exact 4 company records from PWA.xlsx
+- 4 client-provided logos
+- Company-driven logo/UEN/GST/address/bank/PayNow/document prefix
+- Superadmin editable document templates per company
+- Quotation client/header data required by the sample
+- Area / Location + Work Section + Item + Description
+- Pricing types: Amount / Inclusive / Complimentary / F.O.C / Optional
 - Internal cost can be 0
-- Superadmin editable document template wording
-- Quotation / LOA / Invoice / VO / Handover preview
-- Auto payment schedule
-- GST based on selected company
+- Short document numbering
+- Quotation preview based on the supplied sample structure
+- Flexible Letter of Appointment
+- Auto payment schedule 10% / 45% / 40% / 5%, with first payment minimum $1,000
+- Staged invoice / official receipt generation
+- VO additional and cancellation items with original/new contract total
+- Handover House Key Form under DO/Handover
+- Scope / Work Section library
+- PayNow UEN mismatch review warning
 
-Frontend-only using browser LocalStorage.
+Frontend test only. Browser LocalStorage is used. Real backend, authentication, private file storage, immutable PDF archive and true server-side permissions come later.
