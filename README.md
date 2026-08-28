@@ -1,24 +1,36 @@
-# Brick & Decor PWA v0.6 Document Structure Test
+# Brick & Decor PWA v0.6.1 Merged Full Test
 
-Built from the company details, quotation sample, invoice sample and VO sample.
+Correction version.
 
-## Included
+This version keeps all v0.5.1 features and adds the document structure from v0.6. No previous feature should be removed unless specifically requested.
 
-- 4 company master records from PWA.xlsx
-- Actual logo assets for Central, BD Werks, North and Arc & Brush
-- Superadmin-editable company terms/template text
-- Short document numbering format: PREFIX-QYYMM-001, PREFIX-INVYYMM-001, PREFIX-QYYMM-001-VO1
+## Features retained from v0.5.1
+
+- Dashboard
+- Notifications
+- Companies
+- Clients / Cases
+- Quotation overview and filters
+- Project Costing overview and filters
+- Invoice overview and filters
+- PO / Supplier Aging
+- Profit & Commission
+- Master Data
+- Users & Flexible Access
+- Supplier invoice approval and payment flow
+- Commission approval visibility
+- Project visibility rules
+- Premium UI
+
+## Added from document study
+
+- Document Templates tab
 - Quotation structure: Area / Location → Work Section → Item / Description
-- Pricing type: Amount, Inclusive, Complimentary, F.O.C, Optional
-- Hidden internal cost can be keyed as 0
-- GST auto-calculation based on selected company
-- Auto payment schedule: 10% / 45% / 40% / 5%, with first payment minimum S$1,000
-- Flexible Letter of Appointment
-- VO with additional and cancellation items
-- Invoice / Official Receipt based on the sample structure
-- Flexible Handover House Key Form
-- Automation Controls checklist
+- Pricing Type: Amount / Inclusive / Complimentary / F.O.C / Optional
+- Internal cost can be 0
+- Superadmin editable document template wording
+- Quotation / LOA / Invoice / VO / Handover preview
+- Auto payment schedule
+- GST based on selected company
 
-## Important
-
-Frontend-only testing using browser LocalStorage. Real backend, login, storage, PDF archive and true access control are later-stage work.
+Frontend-only using browser LocalStorage.
