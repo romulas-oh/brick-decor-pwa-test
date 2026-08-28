@@ -1,10 +1,10 @@
 {
-  "name": "Brick & Decor PWA v0.5 Overview & Approval Test",
-  "short_name": "BrickDecor05",
+  "name": "Brick & Decor PWA v0.6 Document Structure Test",
+  "short_name": "BrickDecor06",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f7f8fb",
-  "theme_color": "#ff5b5f",
+  "background_color": "#F6F4EF",
+  "theme_color": "#17202A",
   "icons": [
     {
       "src": "assets/icon.svg",
