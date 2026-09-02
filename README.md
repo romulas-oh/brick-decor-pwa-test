@@ -1,50 +1,75 @@
-# Brick & Decor PWA v0.7 Case-Centric Test
+# Brick & Decor PWA v0.9 — L1.4 UX + Document Template Patch
 
-Built on v0.6.2. Previous features are retained; this version reorganises the workflow around the Case File.
+Built directly on the full v0.8 L1.3 UX + Stability source. The Case-centric workflow and previous modules are retained.
 
-## Confirmed v0.7 workflow
-- Case File is the centre of the project.
-- Fixed client/company/site data is entered once at Case creation.
-- Quotations and revisions inherit Case data.
-- Sent revisions save a snapshot.
-- Client approval can auto-change the Case to Project Confirmed; this rule is configurable in Master Data.
-- Supplier invoice is linked to a readable Case/Project.
-- Assigned ID is notified and is the default person allowed to approve/reject supplier invoice.
-- Approved supplier invoice posts once into Actual Project Cost as AUTO cost.
-- Superadmin/Accounts receives approved supplier invoice for payment.
-- ID submits Case Closure Request.
-- Only Superadmin can finalise Closed.
-- Closing saves a final financial snapshot.
-- Closed cases remain hidden from normal ID unless Superadmin grants closed-case access.
-- Commission remains subject to Superadmin approval.
+## L1.4 changes
 
-## UI improvements
-- Quotation builder uses clean presentation rows instead of showing every field as a thick input box.
-- Edit Item opens a focused modal.
-- Work Section Library is selectable from Master Data, with Custom/New option.
-- Direct quotation creation shows client + site + company instead of internal P1/P2.
-- User company access displays full company names, not BDC/BDW/BDN/AB codes.
-- PayNow mismatch warning is explained and Superadmin can mark the payment detail verified.
-- Company logos use absolute URLs in generated print previews.
+- **Customer payment proof upload** added inside Record Customer Payment.
+  - Accepts PDF or image proof in the frontend test.
+  - File name remains in the payment record.
+  - Local preview is available during the browser session; real private persistent storage comes with the backend.
+- **BD Werks payment details corrected**:
+  - UEN: 202411448N
+  - Bank: OCBC : 596-503052-001
+  - PayNow UEN: 202411448N
+  - The previous PayNow/UEN mismatch warning no longer appears for BD Werks.
+- **Company Master redesigned** into clean full-width company cards instead of a compressed wide table.
+- **PO / Supplier Invoice Aging split into two sub-tabs** so each gets the full page width:
+  - Purchase Orders
+  - Supplier Invoice Aging
 
-## Notifications
-- In-app workflow notifications are included.
-- Browser/PWA notification permission and local test notification are included.
-- For iPhone/iPad, install to Home Screen before enabling notifications.
-- True remote push from backend events will be added when authentication/backend is connected.
+## Document Template behaviour clarified
 
-Frontend-only test using browser LocalStorage. Real database, authentication, private attachments, remote push subscriptions and immutable PDF archive come later.
+Document templates are optional Superadmin customization — they are not a setup requirement.
 
+For every company:
 
-## v0.8 L1.3 UX + Stability Patch
-- Based directly on the v0.7 Case-Centric GitHub source.
-- Embedded + bundled all four company logos for GitHub Pages and print reliability.
-- Restored Property Type with editable Master Data library.
-- Repaired missing VO / DO / Handover / manpower render functions that caused blank screens.
-- Added explicit Manual Project Cost flow with AUTO/MANUAL separation.
-- Supplier duplicate warning now keys only on normalized Supplier + Invoice Number.
-- Added row-level customer payment actions and A4 portrait invoice / receipt preview.
-- Added historical quotation revision View / Print actions and immutable snapshots for new revisions.
-- Added responsive notification cards and full human-readable company/staff selectors.
-- Added History API state handling for browser/mobile Back navigation within the PWA.
-- Work Section Library is connected to quotation Add/Edit Item; master item selectors show names, not technical IDs.
+- **System Default** = the built-in B&D wording/payment schedule is active automatically.
+- **Customized** = Superadmin has saved company-specific wording.
+- **Preview** = view the saved template before use.
+- **Edit** = edit only the relevant template section using tabs.
+- **Restore Default** = return that company to the built-in B&D template.
+
+The editor is split into:
+
+- Quotation
+- Letter of Appointment (LOA)
+- Invoice / Official Receipt
+- Variation Order (VO)
+- DO / Handover
+- Payment Schedule
+
+Built-in payment schedule remains:
+
+1. 10% down payment or S$1,000 minimum, whichever is greater
+2. 45% upon commencement
+3. 40% upon measurement of carpentry works
+4. 5% upon completion / handover
+
+The built-in wording was also changed from development-placeholder text to cleaner business-ready B&D defaults.
+
+## Historical document protection in this frontend test
+
+- Sent quotation revisions continue to use their immutable revision/company snapshot.
+- Invoice, VO, DO/Handover and PO records receive a document-template snapshot so later template changes do not silently rewrite the wording used by already-created records in this test build.
+- The production backend should still store immutable generated PDFs/document versions for accounting and audit.
+
+## Retained v0.8 controls
+
+- Case-centric workflow and all Case tabs
+- human-readable company/staff selectors
+- Property Type library
+- Work Section Library in quotation item editor
+- quotation revision View / Preview / Print
+- supplier duplicate rule = same supplier + same invoice number only
+- supplier approval -> one AUTO Actual Project Cost posting
+- Add Manual Cost
+- row-level customer payment action
+- A4 portrait Invoice / Official Receipt
+- responsive Notifications
+- VO and DO/Handover render/print flows
+- browser/mobile Back history
+- closure snapshot and permissions
+- embedded company logos
+
+Frontend-only GitHub Pages test using LocalStorage. Authentication, database, private persistent attachments, immutable PDF archive, real multi-user sync and remote Web Push remain backend-phase work.

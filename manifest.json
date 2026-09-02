@@ -1,6 +1,6 @@
 {
-  "name": "Brick & Decor PWA v0.8 L1.3 UX + Stability Test",
-  "short_name": "BrickDecor08",
+  "name": "Brick & Decor PWA v0.9 L1.4 UX Patch Test",
+  "short_name": "B&D v0.9",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F6F4EF",

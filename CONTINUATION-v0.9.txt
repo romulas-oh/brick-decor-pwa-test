@@ -1,0 +1,86 @@
+PROJECT CONTINUATION — BRICK & DECOR PWA
+CURRENT BUILD: v0.9 L1.4 UX + Document Template Patch
+
+SOURCE BASE
+- v0.9 is built directly on the full v0.8 L1.3 UX + Stability build.
+- v0.8 was built directly on the user's GitHub v0.7 Case-Centric source.
+- Do not restart from old document-only / reduced demos.
+- Active runtime remains index.html + src/v08-patch.js + src/v09-patch.js.
+
+L1.4 IMPLEMENTED
+1. Record Customer Payment now has optional document/payment proof upload.
+   - PDF/image accepted.
+   - Frontend test keeps local preview only for current browser session.
+   - File name remains in payment history.
+   - Production needs private persistent file storage.
+
+2. BD Werks corrected payment details:
+   - Company UEN: 202411448N
+   - Bank: OCBC : 596-503052-001
+   - PayNow UEN: 202411448N
+   - No mismatch warning after correction.
+
+3. Company Master redesigned.
+   - Full-width structured company cards.
+   - Identity/contact and payment details grouped clearly.
+   - Document Template status/actions grouped separately.
+
+4. PO / Supplier Invoice Aging split into 2 sub-tabs:
+   - Purchase Orders
+   - Supplier Invoice Aging
+   Each uses full page width.
+
+DOCUMENT TEMPLATE CLARIFICATION IMPLEMENTED
+- Superadmin does NOT need to edit templates before use.
+- If untouched: status = System Default and built-in B&D wording is used automatically.
+- If edited and saved: status = Customized and future documents use that company-specific wording.
+- Controls: Preview / Edit / Restore Default.
+- Editor is split into tabs:
+  Quotation / LOA / Invoice-Receipt / VO / Handover / Payment Schedule.
+- Built-in defaults are business-ready wording rather than development placeholder descriptions.
+- Default payment schedule remains:
+  10% down payment OR S$1,000 minimum, whichever greater;
+  45% commencement;
+  40% carpentry measurement;
+  5% completion/handover.
+- Sent quotation revision snapshots remain immutable.
+- v0.9 adds template snapshots to already-created Invoice/VO/DO/PO records in the frontend test so later template changes do not silently rewrite their wording.
+- Production must archive immutable generated PDFs/version snapshots in backend storage.
+
+IMPORTANT RETAINED RULES
+- Case File remains centre of system.
+- Normal workers see created/assigned open cases only; closed hidden unless granted.
+- Client approval default auto-moves Case to Project Confirmed; workflow setting remains configurable.
+- Supplier duplicate only when SAME supplier + SAME invoice number.
+- Same supplier + different invoice numbers is valid.
+- Approved supplier invoice posts AUTO project cost once.
+- Manual Project Cost remains available and labelled MANUAL.
+- Quotation follow-up counts from LAST SENT DATE.
+- Work Section Library is selectable in quotation Add/Edit Item.
+- Property Type remains in Case and Master Data.
+- Record Customer Payment is row-level from invoice.
+- Company/staff selectors show readable names, never technical CO/U/P/I IDs.
+- Four embedded company logos remain.
+- VO / DO / Handover blank-screen fix remains.
+- Browser Back / mobile swipe-back history remains.
+- Closing snapshot + Superadmin-only final close remains.
+
+TEST STATE
+- v0.9 source syntax checks: PASS.
+- v0.9 service-worker asset existence: PASS.
+- v0.9 runtime regression harness: 28/28 PASS.
+- Repeated Case tab rendering PASS for:
+  Overview, Quotation, Supplier Cost, Project Cost, VO, Customer Invoice,
+  Payment, DO/Handover, Profit, Activity Log.
+- A load-time regression found during v0.9 testing (wrong invoice print function name) was corrected before package delivery.
+- Chromium visual localhost test is blocked by execution-environment administrator policy; do a short GitHub Pages visual smoke test after upload.
+
+NEXT SAFE STEP
+- Upload v0.9 package contents to existing GitHub test repo.
+- Open with fresh version query, e.g. ?v=0901.
+- Visually check only newly touched areas first:
+  Company Master, Document Template Preview/Edit/Restore,
+  Record Customer Payment upload,
+  Purchase Orders sub-tab,
+  Supplier Invoice Aging sub-tab.
+- Do not repeat full v0.8 discovery unless a touched flow regresses.
