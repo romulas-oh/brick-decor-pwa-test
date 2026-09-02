@@ -1,5 +1,5 @@
-const CACHE_NAME='brick-decor-v07-case-centric';
-const FILES=['./','./index.html','./manifest.json','./assets/icon.svg','./assets/brick-decor-central.jpeg','./assets/bd-werks.png','./assets/brick-decor-north.png','./assets/arc-brush.jpg'];
+const CACHE_NAME='brick-decor-v08-l13-stability';
+const FILES=['./','./index.html','./manifest.json','./assets/icon.svg','./assets/brick-decor-central.jpeg','./assets/bd-werks.png','./assets/brick-decor-north.png','./assets/arc-brush.jpg','./src/v08.css','./src/v08-patch.js'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(FILES)))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)))});

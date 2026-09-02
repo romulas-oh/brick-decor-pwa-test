@@ -34,3 +34,17 @@ Built on v0.6.2. Previous features are retained; this version reorganises the wo
 - True remote push from backend events will be added when authentication/backend is connected.
 
 Frontend-only test using browser LocalStorage. Real database, authentication, private attachments, remote push subscriptions and immutable PDF archive come later.
+
+
+## v0.8 L1.3 UX + Stability Patch
+- Based directly on the v0.7 Case-Centric GitHub source.
+- Embedded + bundled all four company logos for GitHub Pages and print reliability.
+- Restored Property Type with editable Master Data library.
+- Repaired missing VO / DO / Handover / manpower render functions that caused blank screens.
+- Added explicit Manual Project Cost flow with AUTO/MANUAL separation.
+- Supplier duplicate warning now keys only on normalized Supplier + Invoice Number.
+- Added row-level customer payment actions and A4 portrait invoice / receipt preview.
+- Added historical quotation revision View / Print actions and immutable snapshots for new revisions.
+- Added responsive notification cards and full human-readable company/staff selectors.
+- Added History API state handling for browser/mobile Back navigation within the PWA.
+- Work Section Library is connected to quotation Add/Edit Item; master item selectors show names, not technical IDs.

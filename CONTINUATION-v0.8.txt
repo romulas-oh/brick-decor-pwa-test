@@ -1,0 +1,67 @@
+PROJECT CONTINUATION — BRICK & DECOR PWA v0.8 L1.3 UX + STABILITY
+
+CURRENT SOURCE OF TRUTH
+- User's GitHub-downloaded v0.7 Case-Centric repository was patched directly.
+- Current build is v0.8 L1.3 UX + Stability.
+- Runtime remains frontend-only: static HTML/CSS/JS + LocalStorage + service worker/PWA.
+- Main legacy runtime remains inline in index.html.
+- v0.8 coordinated overrides/migrations live in src/v08-patch.js and src/v08.css.
+- Do NOT restart from src/app.js; it is an older v0.4 file and is not the active v0.8 runtime.
+
+V0.8 FIXES APPLIED
+1. Company/staff/project-facing selectors use human-readable names rather than CO/U/P/I database IDs.
+2. Property Type restored in Create Case and added as editable Master Data library.
+3. Missing voHtml, doHtml, manHtml, and voNet functionality implemented; blank VO/DO-Handover regressions repaired.
+4. Supplier duplicate logic = same normalized Supplier + same normalized Invoice Number only. Same supplier with different invoice numbers is valid.
+5. Explicit Add Manual Cost flow added. AUTO supplier-posted costs and MANUAL costs are clearly separated.
+6. Supplier approval posts approved invoice amount into project cost once only.
+7. Customer invoices use row-level Record Payment action; no huge invoice selector.
+8. Invoice/official receipt preview moved to clean A4 portrait layout.
+9. Notification page changed from wide tables to responsive two-column cards / stacked phone cards.
+10. Quotation Work Section Library connected to Add/Edit Item with Custom/New option.
+11. New sent quotation revisions save immutable full snapshots. Historical v0.7 metadata-only revisions remain viewable with a legacy disclaimer rather than being falsely reconstructed.
+12. Revision History has View / Preview / Print.
+13. History API routing added so browser Back/mobile swipe-back restores prior in-app state instead of navigating among old deployment query URLs.
+14. Four company logos embedded as data URLs and also included under assets/ for fallback/service-worker use.
+15. Company Master and quotation/invoice/VO/PO/DO print previews use selected-company logo.
+16. Client approval flow repaired; default auto-moves Case to Project Confirmed. Configurable Superadmin-confirmation workflow is preserved.
+17. Closing review and immutable closing snapshot expanded.
+18. reset() overridden so v0.8 Property Types/logo migration is not lost after reset.
+19. Sidebar/version/manifest/service-worker cache updated to v0.8.
+
+LOGO MAPPING
+- Brick & Decor (Central) Pte Ltd -> assets/brick-decor-central.jpeg
+- BD Werks Pte Ltd -> assets/bd-werks.png
+- Brick & Decor (North) Pte Ltd -> assets/brick-decor-north.png
+- Arc & Brush -> assets/arc-brush.jpg
+All are also embedded in src/v08-patch.js as data URLs for robust GitHub Pages/document print use.
+
+IMPORTANT EXISTING BUSINESS RULES PRESERVED
+- Case File is system centre.
+- Client approval recorded by assigned ID; current default auto Project Confirmed.
+- Quotation follow-up counts from last sent date, default 10 days.
+- Same supplier may have many invoices; duplicate is supplier+invoice number.
+- Only assigned ID normally verifies supplier invoice; Superadmin can override by permission.
+- Approved supplier invoice auto-posts cost once; supplier payment does not duplicate cost.
+- Normal workers see own/assigned open cases; closed cases unavailable unless explicit permission.
+- Only Superadmin final-closes a Case after closure request.
+- Commission is visible to normal staff only after Superadmin approval.
+- BD Werks PayNow UEN mismatch warning remains and should not be silently corrected.
+
+TESTS COMPLETED
+- JavaScript syntax: PASS for index inline JS, src/v08-patch.js, sw.js.
+- Service-worker local cache files: all exist.
+- Runtime renderer regression harness: 25/25 PASS.
+- Simulated end-to-end workflow harness: 23/23 PASS.
+- Total automated checks reported: 48/48 PASS.
+- Native local Chromium was blocked by environment restrictions on localhost/file URLs; after GitHub upload, do a quick real-browser visual smoke test for print layout, mobile responsive layout, Back/swipe-back, and PWA notification permission.
+
+NEXT SAFE STEP
+1. Upload the contents of the v0.8 ZIP to romulas-oh/brick-decor-pwa-test, replacing the current test files while keeping repository history.
+2. Wait for GitHub Pages to redeploy.
+3. Open with a fresh cache-busting URL such as ?v=0801.
+4. Smoke test: Dashboard -> Notifications -> Companies -> Create Case -> open Case -> every Case tab -> quote/work section/revision -> supplier duplicate/approve/reject -> Manual Cost -> VO -> invoice/payment -> DO/Handover -> Profit -> Users -> browser Back -> print previews/logos.
+5. If service-worker cache keeps an older build, hard-refresh/clear the site's stored data or unregister the old service worker, then reopen.
+
+DO NOT REPEAT OLD DISCOVERY OR 5-6 HOURS OF TESTING IN THE NEXT CHAT.
+Start from this v0.8 package/test state and only regression-test areas touched by the next amendment.
