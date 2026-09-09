@@ -1,75 +1,166 @@
-# Brick & Decor PWA v0.9 — L1.4 UX + Document Template Patch
+# Brick & Decor PWA v0.10 — L1.4 Workflow Patch
 
-Built directly on the full v0.8 L1.3 UX + Stability source. The Case-centric workflow and previous modules are retained.
+Built directly on the full v0.9 source, preserving the v0.8 Case-centric workflow and all earlier modules.
 
-## L1.4 changes
+## L1.4 changes carried forward
 
-- **Customer payment proof upload** added inside Record Customer Payment.
-  - Accepts PDF or image proof in the frontend test.
-  - File name remains in the payment record.
-  - Local preview is available during the browser session; real private persistent storage comes with the backend.
-- **BD Werks payment details corrected**:
+- Customer payment proof/document upload remains available.
+- BD Werks payment details remain corrected:
   - UEN: 202411448N
   - Bank: OCBC : 596-503052-001
   - PayNow UEN: 202411448N
-  - The previous PayNow/UEN mismatch warning no longer appears for BD Werks.
-- **Company Master redesigned** into clean full-width company cards instead of a compressed wide table.
-- **PO / Supplier Invoice Aging split into two sub-tabs** so each gets the full page width:
-  - Purchase Orders
-  - Supplier Invoice Aging
+- Company Master remains in the cleaner v0.9 layout.
+- PO and Supplier Invoice Aging remain split into separate full-width sub-tabs.
+- Latest/newest operational records now appear at the top of lists wherever date/order information is available.
 
-## Document Template behaviour clarified
+## New v0.10 — Client approval / E-sign workflow
 
-Document templates are optional Superadmin customization — they are not a setup requirement.
+### Manual/offline approval
 
-For every company:
+Manual client approval now **requires at least one signed approval evidence file** before confirmation:
 
-- **System Default** = the built-in B&D wording/payment schedule is active automatically.
-- **Customized** = Superadmin has saved company-specific wording.
-- **Preview** = view the saved template before use.
-- **Edit** = edit only the relevant template section using tabs.
-- **Restore Default** = return that company to the built-in B&D template.
+- signed quotation
+- signed document
+- photo
+- PDF/image supporting approval evidence
 
-The editor is split into:
+The approval record stores the approval method, date, remark, approved revision and evidence information.
 
-- Quotation
-- Letter of Appointment (LOA)
-- Invoice / Official Receipt
-- Variation Order (VO)
-- DO / Handover
-- Payment Schedule
+### Customer view + E-sign link
 
-Built-in payment schedule remains:
+A sent quotation now has **Customer E-sign Link** in the Case → Quotation screen.
 
-1. 10% down payment or S$1,000 minimum, whichever is greater
-2. 45% upon commencement
-3. 40% upon measurement of carpentry works
-4. 5% upon completion / handover
+The frontend test can:
 
-The built-in wording was also changed from development-placeholder text to cleaner business-ready B&D defaults.
+1. generate a customer link token;
+2. display the latest sent quotation revision in a simplified customer view;
+3. capture customer full name + drawn signature;
+4. record E-sign approval evidence against the quotation;
+5. move the Case according to the configured client-approval workflow.
 
-## Historical document protection in this frontend test
+**Frontend-only limitation:** GitHub Pages + LocalStorage cannot make a real cross-device customer link return data into the staff PWA. The production backend must provide secure link/token lookup, persistent document storage and signed submission sync. The UI/workflow in v0.10 is prepared for that backend connection.
 
-- Sent quotation revisions continue to use their immutable revision/company snapshot.
-- Invoice, VO, DO/Handover and PO records receive a document-template snapshot so later template changes do not silently rewrite the wording used by already-created records in this test build.
-- The production backend should still store immutable generated PDFs/document versions for accounting and audit.
+Recommended production controls later:
 
-## Retained v0.8 controls
+- single-use/expiring signing token
+- immutable signed quotation snapshot
+- customer name + signature + timestamp
+- signer IP/device/user-agent audit where legally appropriate
+- private evidence storage
+- audit trail for regenerated/revoked links
 
-- Case-centric workflow and all Case tabs
-- human-readable company/staff selectors
+## Supplier invoice line-item workflow
+
+Supplier Invoice entry now captures:
+
+- Supplier / Vendor
+- Supplier Invoice No.
+- Invoice Date
+- Case / Project
+- GST Yes/No
+- GST Rate
+- Due Date
+- Attachment
+- one or more invoice line items
+
+Each invoice line captures:
+
+- Item
+- Description
+- Unit Cost
+- Quantity
+- Match to Approved Quotation / VO Item
+
+After Case / Project selection, the match dropdown combines items from **all accepted quotations** for the Case plus approved additional VO items. This supports projects with more than one approved quotation.
+
+Duplicate warning remains exactly:
+
+**same Supplier + same Supplier Invoice Number**
+
+The same supplier may continue to submit many different invoices normally.
+
+## Supplier approval → Actual Project Cost
+
+When Assigned ID approves the supplier invoice:
+
+- each supplier invoice line posts to Actual Project Cost once;
+- the quotation/VO match is retained on the cost line;
+- multiple supplier invoices can match the same approved quotation/VO item;
+- re-approving does not duplicate the cost posting.
+
+If supplier GST is enabled, GST is proportionally allocated across invoice lines so matched actual-cost rows reconcile to the supplier invoice total.
+
+## Project Cost Reconciliation
+
+Case → Project Cost now includes a row-by-row comparison:
+
+- Location
+- Item
+- Estimated Cost (Quotation)
+- Charge Amount
+- Actual Cost from Supplier
+- Cost Variance
+- Actual Margin
+
+Actual Cost from Supplier sums **all approved supplier invoice lines** matched to that item.
+
+Manual Cost remains separate and available through **+ Add Manual Cost**.
+
+Legacy/unmatched AUTO supplier costs remain visible so historical cost does not disappear during migration.
+
+## Supplier Invoice filtering + Excel export
+
+Supplier Invoice Aging can now filter by:
+
+- Company
+- Supplier
+- Case / Project
+- Date From
+- Date To
+- Status tabs
+
+**Export Excel** downloads the currently filtered supplier invoice line-item data in Excel-compatible SpreadsheetML `.xls` format.
+
+## Document-template v0.9 hotfix
+
+v0.9 snapshotted Invoice / VO / DO / PO wording too early. v0.10 corrects that behaviour:
+
+- Draft/unissued document → uses latest Company Master template.
+- Company Master edit → draft output changes immediately.
+- Explicitly **Issue / Lock Current Template** → saves an immutable wording snapshot.
+- Later Company Master edits do not alter that issued document.
+- Sent quotation revisions remain immutable as before.
+
+## Retained previous features
+
+- Case-centric workflow
+- all 10 Case tabs
+- full company/staff names instead of technical IDs
 - Property Type library
-- Work Section Library in quotation item editor
-- quotation revision View / Preview / Print
-- supplier duplicate rule = same supplier + same invoice number only
-- supplier approval -> one AUTO Actual Project Cost posting
-- Add Manual Cost
+- Work Section Library in quotation Add/Edit Item
+- quotation revision View / Print
+- payment-proof upload
 - row-level customer payment action
 - A4 portrait Invoice / Official Receipt
 - responsive Notifications
-- VO and DO/Handover render/print flows
+- VO / DO / Handover flows
 - browser/mobile Back history
-- closure snapshot and permissions
+- closure snapshot
+- flexible permissions
 - embedded company logos
+- Company Master template defaults/customization/restore
 
-Frontend-only GitHub Pages test using LocalStorage. Authentication, database, private persistent attachments, immutable PDF archive, real multi-user sync and remote Web Push remain backend-phase work.
+## Current platform
+
+Frontend-only GitHub Pages test using LocalStorage.
+
+Still backend-phase work:
+
+- real authentication
+- database / multi-user sync
+- private persistent files
+- real cross-device E-sign submission
+- immutable generated PDF archive
+- remote Web Push
+- server-side audit logs
+- secure public signing tokens
