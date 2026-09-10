@@ -1,6 +1,6 @@
 {
-  "name": "Brick & Decor PWA v0.10 L1.4 Workflow Patch Test",
-  "short_name": "B&D v0.10",
+  "name": "Brick & Decor PWA v0.11 Supabase Backend + Real E-sign Test",
+  "short_name": "B&D v0.11",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F6F4EF",
