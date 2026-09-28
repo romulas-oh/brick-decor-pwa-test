@@ -2328,9 +2328,207 @@ async function v11Boot(){
     @media(max-width:900px){.v15StdRow{grid-template-columns:1fr 1fr}.v15LibraryList{grid-template-columns:1fr}}@media(max-width:600px){.v15StdRow{grid-template-columns:1fr}.v15StandardLine{grid-template-columns:1fr}.v15LibraryEditRow{grid-template-columns:28px 1fr}.v15LibraryEditRow .actions{grid-column:2}.v15LibraryHead{display:block}.v15LibraryHead .btn{margin-top:8px}}
   `;document.head.appendChild(css);
 
-  document.title='Brick & Decor PWA v0.15 L1.6 UX + E-sign Repair';
+  document.title='Brick & Decor PWA v0.16 L1.7 Stability + UX';
   (S.quotes||[]).forEach(v14EnsureStandard);save();
 })();
+</script><script>
+/* Brick & Decor PWA v0.16 — L1.7 Signature + Modal Stability */
+(function(){
+  const V16_STANDARD=[
+    'Space Planning & Furniture Layout',
+    'Design Consultation',
+    'Home styling Consultation',
+    'Materials & Colour Proposal',
+    '7 Perspective Drawings',
+    'Project Management & Site Supervision & Audit',
+    '12 Mths Warranty With Guaranteed After Sales Service on Water Proofing',
+    '24 Months Warranty With Guaranteed After Sales Service on Workmanship'
+  ];
+  S.userSignatures=S.userSignatures||{};
+
+  function v16AssignedIds(p){return [...new Set(((p?.idUsers?.length?p.idUsers:[p?.idUser]).filter(Boolean)))];}
+  function v16StaffSig(id){return S.userSignatures?.[id]||null;}
+  function v16CurrentId(){return user()?.id||S.currentUser||'';}
+  function v16CurrentSig(){return v16StaffSig(v16CurrentId());}
+  function v16EligibleCompanySigner(p){
+    const ids=v16AssignedIds(p), assigned=ids.find(id=>!!v16StaffSig(id));
+    if(assigned)return {id:assigned,sig:v16StaffSig(assigned),assigned:true};
+    const u=user(),mine=v16CurrentSig();
+    if(mine&&(u?.role==='Superadmin'||!ids.length))return {id:v16CurrentId(),sig:mine,assigned:false};
+    return null;
+  }
+
+  // -----------------------------------------------------------------------
+  // A. One modal system: every popup gets an X; preview actions stay visible.
+  // -----------------------------------------------------------------------
+  let v16PadCleanup=null;
+  function v16CleanupPad(){if(v16PadCleanup){try{v16PadCleanup();}catch(_){}v16PadCleanup=null;}}
+  function v16EnhanceModal(){
+    const inner=document.querySelector('#mb .v16ModalInner');if(!inner)return;
+    const isPreview=!!inner.querySelector('.previewPaper,.invoicePaper,.v14StandaloneDoc,.v14DocumentRoot');
+    if(!isPreview)return;
+    const candidates=[...inner.querySelectorAll('button')].filter(b=>/^(Close|Print \/ Save PDF)$/i.test((b.textContent||'').trim()));
+    if(!candidates.length)return;
+    let bar=inner.querySelector('.v16StickyPreviewActions');
+    if(!bar){bar=document.createElement('div');bar.className='v16StickyPreviewActions';inner.insertBefore(bar,inner.firstChild);}
+    candidates.forEach(b=>bar.appendChild(b));
+  }
+  modal=function(h){
+    v16CleanupPad();
+    const m=$('modal'),mb=$('mb');if(!m||!mb)return;
+    mb.innerHTML=`<button type="button" class="v16ModalX" aria-label="Close" title="Close" onclick="closeModal()">×</button><div class="v16ModalInner">${h}</div>`;
+    m.classList.add('show');
+    requestAnimationFrame(v16EnhanceModal);
+  };
+  closeModal=function(){v16CleanupPad();const m=$('modal');if(m)m.classList.remove('show');};
+
+  // -----------------------------------------------------------------------
+  // B. Signature pad: single state, Pointer Events, global release safety.
+  // -----------------------------------------------------------------------
+  let v16SignatureDirty=false;
+  function v16BindSignaturePad(canvas,existingData=''){
+    if(!canvas)return;
+    v16CleanupPad();
+    const ctx=canvas.getContext('2d');
+    ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#17202A';
+    canvas.style.touchAction='none';
+    let drawing=false,last=null,activePointer=null;
+    const point=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)}};
+    const stop=e=>{
+      if(activePointer!==null&&e?.pointerId!==undefined&&e.pointerId!==activePointer)return;
+      drawing=false;last=null;activePointer=null;
+    };
+    const down=e=>{
+      if(e.pointerType==='mouse'&&e.button!==0)return;
+      e.preventDefault();drawing=true;activePointer=e.pointerId;last=point(e);
+    };
+    const move=e=>{
+      if(!drawing||e.pointerId!==activePointer)return;
+      e.preventDefault();const p=point(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;v16SignatureDirty=true;
+    };
+    canvas.addEventListener('pointerdown',down,{passive:false});
+    canvas.addEventListener('pointermove',move,{passive:false});
+    window.addEventListener('pointerup',stop,true);window.addEventListener('pointercancel',stop,true);window.addEventListener('blur',stop,true);
+    canvas.addEventListener('contextmenu',e=>e.preventDefault());
+    if(existingData){const im=new Image();im.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(im,0,0,canvas.width,canvas.height);v16SignatureDirty=true;};im.src=existingData;}
+    v16PadCleanup=()=>{
+      canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointermove',move);
+      window.removeEventListener('pointerup',stop,true);window.removeEventListener('pointercancel',stop,true);window.removeEventListener('blur',stop,true);
+      drawing=false;last=null;activePointer=null;
+    };
+  }
+  window.v14OpenMySignature=function(){
+    const id=v16CurrentId(),existing=v16StaffSig(id),u=user();v16SignatureDirty=!!existing?.data;
+    modal(`<div class="v14SignatureModal v16SignatureModal"><h2>My ID / Staff Signature</h2><p class="small">Sign once and save. Release the mouse/finger after each stroke; reopening this window will load the saved signature.</p><div class="field"><label>Signer Name</label><input id="v14_sig_name" value="${esc(existing?.name||u?.name||'')}"></div><canvas id="v14_sig_canvas" width="900" height="260"></canvas><div class="actions"><button class="btn" type="button" onclick="v14ClearMySignature()">Clear</button><button class="btn" type="button" onclick="closeModal()">Cancel</button><button class="btn p" type="button" onclick="v14SaveMySignature()">Save Signature</button></div></div>`);
+    setTimeout(()=>v16BindSignaturePad($('v14_sig_canvas'),existing?.data||''),0);
+  };
+  window.v14ClearMySignature=function(){const c=$('v14_sig_canvas');if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);v16SignatureDirty=false;};
+  window.v14SaveMySignature=function(){
+    const c=$('v14_sig_canvas'),name=$('v14_sig_name')?.value.trim(),id=v16CurrentId();
+    if(!c||!name)return toast('Enter signer name first');
+    if(!v16SignatureDirty)return toast('Please sign before saving');
+    S.userSignatures[id]={name,data:c.toDataURL('image/png'),date:new Date().toISOString()};
+    save();closeModal();toast('Signature saved successfully');if(active)show(active);
+  };
+  v10InitSignaturePad=function(){const c=$('v10_sign_canvas');if(!c)return;v10SignatureDirty=false;v16BindSignaturePad(c,'');const mark=()=>{v10SignatureDirty=true;};c.addEventListener('pointermove',e=>{if(e.buttons||e.pressure>0)mark();},{passive:true});};
+  v10ClearSignature=function(){const c=$('v10_sign_canvas');if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);v10SignatureDirty=false;};
+
+  // -----------------------------------------------------------------------
+  // C. Customer quotation E-sign: direct v0.11 backend flow + signature gate.
+  // -----------------------------------------------------------------------
+  const v16BaseLeanSnapshot=v11LeanRevisionSnapshot;
+  v11LeanRevisionSnapshot=function(q,p,snap){
+    const out=v16BaseLeanSnapshot(q,p,snap)||{};out.staff_signatures=out.staff_signatures||{};
+    const signer=v16EligibleCompanySigner(p);if(signer?.sig&&!Object.keys(out.staff_signatures).length)out.staff_signatures[signer.id]=JSON.parse(JSON.stringify(signer.sig));
+    return out;
+  };
+  generateCustomerLink=async function(qid){
+    const q=S.quotes.find(x=>x.id===qid);if(!q)return;
+    const p=S.projects.find(x=>x.id===q.p)||{};
+    if(!q.lastSent){toast('Send a quotation revision before generating the customer E-sign link');return;}
+    if(!V11_PROFILE||!V11_SESSION?.access_token){toast('Sign in to Supabase first');return;}
+    const signer=v16EligibleCompanySigner(p);
+    if(!signer){
+      const ids=v16AssignedIds(p),names=ids.map(uname).filter(Boolean).join(', ')||'Assigned ID';
+      modal(`<h2>ID Signature Required</h2><div class="warnbox">Save a company-side signature before sending the customer E-sign link.<br><br><b>Assigned ID:</b> ${esc(names)}</div>${ids.includes(v16CurrentId())||user()?.role==='Superadmin'?'<button class="btn p" onclick="closeModal();v14OpenMySignature()">Sign Now</button> ':''}<button class="btn" onclick="closeModal()">Close</button>`);return;
+    }
+    modal(`<h2>Creating Secure Customer Link</h2><div class="goodbox"><span class="v11Spinner"></span>Synchronising the sent quotation revision to Supabase and creating a secure token…</div>`);
+    try{
+      const synced=await v11EnsureBackendRevision(q);
+      const r=await v11Rpc('create_esign_request',{p_revision_id:synced.revisionId,p_expires_days:14},true);
+      const link=`${location.origin}${location.pathname}?sign=${encodeURIComponent(r.token)}`;
+      q.esign={backend:true,requestId:r.id,token:r.token,status:'PENDING',backendStatus:'PENDING',expiresAt:r.expires_at,createdAt:new Date().toISOString(),createdBy:V11_PROFILE.name||V11_PROFILE.email||user()?.name,revisionLabel:r.revision_label};save();
+      modal(`<h2>Secure Customer E-sign Link</h2><div class="goodbox"><b>${esc(r.quotation_no||q.id)} ${esc(r.revision_label||'')}</b><br>Company signature: ${esc(signer.sig.name)}. This link works on another phone/computer.</div><div class="field"><label>Customer Link</label><div class="v10LinkRow"><input id="v10_esign_link" readonly value="${esc(link)}"><button class="btn" onclick="v10CopyLink()">Copy</button><button class="btn p" onclick="window.open($('v10_esign_link').value,'_blank')">Preview Link</button></div></div><div class="soft"><b>Expires:</b> ${esc(new Date(r.expires_at).toLocaleString())}<br><span class="small">Generating a new link for the same revision revokes the older pending link.</span></div><button class="btn" onclick="closeModal()">Close</button>`);
+      if(active)show(active);
+    }catch(e){modal(`<h2>Unable to Create E-sign Link</h2><div class="dangerbox"><b>${esc(e.message||'Unknown error')}</b></div><p class="small">SQL 05 must already be installed. If this persists, send this exact error message for tracing.</p><button class="btn" onclick="closeModal()">Close</button>`);}
+  };
+
+  // Document E-sign uses the same working signature source and v0.15 RPCs.
+  v14CreateDocumentEsign=async function(type,no,coCode,caseNo,html){
+    if(!V11_PROFILE||!V11_SESSION?.access_token)return toast('Sign in to Supabase first');
+    const p=S.projects.find(x=>x.id===caseNo)||{},signer=v16EligibleCompanySigner(p);
+    if(!signer){modal(`<h2>ID Signature Required</h2><div class="warnbox">Save a company-side signature before sending this document for customer E-sign.</div><button class="btn p" onclick="closeModal();v14OpenMySignature()">Sign Now</button><button class="btn" onclick="closeModal()">Close</button>`);return;}
+    modal(`<h2>Creating Secure E-sign Link</h2><div class="goodbox"><span class="v11Spinner"></span>Preparing ${esc(type)} for customer signing…</div>`);
+    try{
+      const r=await v11Rpc('create_document_esign_request_v15',{p_company_id:v11CompanyUuid(coCode),p_local_case_no:'LOCAL-'+caseNo,p_document_type:type,p_document_no:no,p_document_snapshot:{html,company:co(coCode),document_type:type,document_no:no},p_staff_signer_name:signer.sig.name,p_staff_signature_data:signer.sig.data,p_expires_days:14},true),link=`${location.origin}${location.pathname}?docsign=${encodeURIComponent(r.token)}`;
+      S.documentEsign=S.documentEsign||[];S.documentEsign.push({id:r.id,type,no,status:'PENDING',expiresAt:r.expires_at});save();
+      modal(`<h2>Secure ${esc(type)} E-sign Link</h2><div class="goodbox"><b>${esc(no)}</b><br>Customer can open this link on another phone/computer and sign.</div><div class="field"><label>Customer Link</label><div class="v10LinkRow"><input id="v10_esign_link" readonly value="${esc(link)}"><button class="btn" onclick="v10CopyLink()">Copy</button><button class="btn p" onclick="window.open($('v10_esign_link').value,'_blank')">Preview Link</button></div></div><p class="small">Expires ${esc(new Date(r.expires_at).toLocaleString())}</p><button class="btn" onclick="closeModal()">Close</button>`);
+    }catch(e){modal(`<h2>Unable to Create Document E-sign Link</h2><div class="dangerbox"><b>${esc(e.message||'Unknown error')}</b></div><p class="small">SQL 05 must already be installed. If this persists, send this exact error message for tracing.</p><button class="btn" onclick="closeModal()">Close</button>`);}
+  };
+
+  // -----------------------------------------------------------------------
+  // D. Professional Services: no Qty/1 Lot/internal cost for defaults; editable.
+  // -----------------------------------------------------------------------
+  function v16StandardItems(q){return (q?.items||[]).filter(i=>i.standardFixed).sort((a,b)=>Number(a.standardKey??0)-Number(b.standardKey??0));}
+  window.v16EditStandardServices=function(){
+    const q=S.quotes.find(x=>x.id===qDetail);if(!q)return;const rows=v16StandardItems(q);
+    modal(`<div class="v16StdModal"><div class="sectionToolbar"><div><h2>Professional Services</h2><p class="small">Default services are Complimentary. Qty, Unit and Internal Cost are intentionally not used for this fixed section.</p></div><button class="btn" onclick="v16ResetStandardServices()">Reset to Standard</button></div><div class="v16StdRows">${rows.map((it,n)=>`<div class="v16StdRow" data-index="${(q.items||[]).indexOf(it)}"><div class="field"><label>Service ${n+1}</label><input class="v16_std_name" value="${esc(it.name||'')}"></div><div class="field"><label>Description (optional)</label><textarea class="v16_std_desc" rows="2">${esc(it.desc||'')}</textarea></div><div class="field"><label>Customer Price</label><select class="v16_std_type" onchange="this.closest('.v16StdRow').querySelector('.v16_std_amt').style.display=this.value==='Amount'?'block':'none'">${['Complimentary','Inclusive','F.O.C','Amount'].map(x=>`<option ${x===(it.pricingType||'Complimentary')?'selected':''}>${x}</option>`).join('')}</select></div><div class="field v16_std_amt" style="display:${it.pricingType==='Amount'?'block':'none'}"><label>Amount</label><input class="v16_std_price" type="number" min="0" step="0.01" value="${Number(it.price||0)}"></div></div>`).join('')}</div><div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn p" onclick="v16SaveStandardServices()">Save Professional Services</button></div></div>`);
+  };
+  window.v16SaveStandardServices=function(){
+    const q=S.quotes.find(x=>x.id===qDetail);if(!q)return;
+    document.querySelectorAll('.v16StdRow').forEach(row=>{const i=Number(row.dataset.index),it=q.items[i];if(!it)return;it.name=row.querySelector('.v16_std_name').value.trim()||it.name;it.desc=row.querySelector('.v16_std_desc').value;it.pricingType=row.querySelector('.v16_std_type').value;it.price=it.pricingType==='Amount'?(+row.querySelector('.v16_std_price').value||0):0;it.qty=1;it.unit='';it.cost=0;});
+    save();closeModal();show('quotation');toast('Professional Services updated');
+  };
+  window.v16ResetStandardServices=function(){
+    const q=S.quotes.find(x=>x.id===qDetail);if(!q)return;v16StandardItems(q).forEach((it,n)=>{it.name=V16_STANDARD[Number(it.standardKey??n)]||V16_STANDARD[n]||it.name;it.desc='';it.pricingType='Complimentary';it.price=0;it.qty=1;it.unit='';it.cost=0;});save();closeModal();show('quotation');toast('Professional Services reset');
+  };
+
+  const v16BaseQuoteDetail=quoteDetail;
+  quoteDetail=function(){
+    const html=v16BaseQuoteDetail();
+    const d=document.createElement('div');d.innerHTML=html;
+    d.querySelectorAll('.v14BuilderSection').forEach(sec=>{
+      const title=sec.querySelector('.v14BuilderSectionHead h3')?.textContent?.trim();if(title!=='Professional Services')return;
+      const actions=sec.querySelector('.v14BuilderSectionHead .actions');
+      if(actions){const old=actions.querySelector('[onclick*="v16EditStandardServices"]');if(!old){const b=document.createElement('button');b.className='btn s';b.setAttribute('onclick','v16EditStandardServices()');b.textContent='Edit Services';actions.insertBefore(b,actions.querySelector('.r')||null);const r=document.createElement('button');r.className='btn s';r.setAttribute('onclick','v16ResetStandardServices()');r.textContent='Reset';actions.insertBefore(r,actions.querySelector('.r')||null);}}
+      sec.querySelectorAll('.v14BuilderLine').forEach(row=>{if(/Fixed default/i.test(row.textContent||'')){row.querySelector('.internal')?.remove();const small=[...row.querySelectorAll('.small')].find(x=>/Fixed default/i.test(x.textContent||''));if(small)small.textContent='Default service';}});
+    });
+    return d.innerHTML;
+  };
+
+  function v16StripStandardQty(html){
+    const d=document.createElement('div');d.innerHTML=html;
+    const secs=[...d.querySelectorAll('.v14PrintSection,.v13PrintSection')];
+    secs.forEach(sec=>{if(sec.textContent.trim()!=='Professional Services')return;let n=sec.nextElementSibling;while(n&&!n.matches('.v14PrintSection,.v13PrintSection')){n.querySelectorAll?.('.v14PrintQty,.v13PrintQty').forEach(x=>x.remove());n=n.nextElementSibling;}});
+    return d.innerHTML;
+  }
+  const v16BaseQuotePreview=quotePreviewHtml;
+  quotePreviewHtml=function(q){return v16StripStandardQty(v16BaseQuotePreview(q));};
+  const v16BaseRevisionPreview=revisionPreviewHtml;
+  revisionPreviewHtml=function(q,snap){return v16StripStandardQty(v16BaseRevisionPreview(q,snap));};
+
+  // -----------------------------------------------------------------------
+  // E. Version styling.
+  // -----------------------------------------------------------------------
+  const v16BaseLayout=layout;layout=function(){v16BaseLayout();const n=document.querySelector('.side .note');if(n)n.innerHTML='<b>v0.16 L1.7 Stability + UX</b><br>Reliable ID/customer signatures, repaired E-sign launch, clean Professional Services defaults, sticky document controls and universal modal close buttons.';};
+  const css=document.createElement('style');css.textContent=`
+    #modal .box{position:relative}.v16ModalX{position:sticky;top:0;float:right;margin:-7px -7px 4px 8px;width:36px;height:36px;border:1px solid var(--l);border-radius:50%;background:#fff;color:#344054;font-size:25px;line-height:30px;font-weight:400;cursor:pointer;z-index:30;box-shadow:0 4px 12px rgba(15,23,42,.10)}.v16ModalX:hover{background:#F7F4EE;color:#111}.v16ModalInner{clear:both}.v16StickyPreviewActions{position:sticky;top:-20px;z-index:25;display:flex;justify-content:flex-end;gap:8px;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--l);padding:10px 44px 10px 10px;margin:-10px -2px 12px;box-shadow:0 7px 16px rgba(15,23,42,.06)}.v16SignatureModal canvas{width:100%;height:220px;border:1px solid #B8C0CC;border-radius:12px;background:#fff;touch-action:none;cursor:crosshair;margin:8px 0 12px}.v16StdRows{display:grid;gap:10px}.v16StdRow{display:grid;grid-template-columns:minmax(210px,1.2fr) minmax(260px,1.5fr) 170px 150px;gap:10px;border:1px solid var(--l);border-radius:14px;padding:12px;background:#fff;align-items:start}.v16StdRow textarea{white-space:pre-wrap}.v14BuilderLine .desc,.v14CombinedList .v15CombinedDesc,.v14PrintDesc{white-space:pre-line}.v14BuilderSection:has(.v14BuilderSectionHead h3:first-child){min-width:0}
+    @media(max-width:900px){.v16StdRow{grid-template-columns:1fr 1fr}}@media(max-width:600px){.v16StdRow{grid-template-columns:1fr}.v16StickyPreviewActions{top:-14px;padding-right:42px}.v16ModalX{margin-right:-3px}}
+  `;document.head.appendChild(css);
+  document.title='Brick & Decor PWA v0.16 L1.7 Stability + UX';
+  (S.quotes||[]).forEach(q=>v16StandardItems(q).forEach(it=>{it.qty=1;it.unit='';it.cost=0;}));save();
+})();
+
 </script><script>if($('modal'))$('modal').onclick=e=>{if(e.target.id=='modal')closeModal()};
 Promise.resolve().then(()=>v11Boot()).catch(e=>{console.error('B&D startup failed',e);document.body.innerHTML=`<div class="v11Loading"><div><h2>Unable to start B&D</h2><p>${String(e?.message||e||'Unknown startup error')}</p><button class="btn p" onclick="location.reload()">Retry</button></div></div>`;});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('Service worker registration failed',e));

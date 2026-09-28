@@ -1,0 +1,7 @@
+Brick & Decor PWA v0.16 continuation state
+
+Baseline: v0.15 L1.6 + SQL 05 installed.
+Current patch: v0.16 L1.7 Stability + UX.
+No new database migration.
+Main resolved issues: signature pad stuck state, Save Signature not functioning, Customer E-sign button wrapper failure, fixed Professional Services 1 Lot/internal-cost clutter, preview action scrolling, modal X controls.
+Next manual test: signature -> save/reopen -> quotation customer E-sign -> customer submit -> preview sticky controls -> Professional Services display.
