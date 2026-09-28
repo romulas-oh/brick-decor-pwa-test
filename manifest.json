@@ -1,6 +1,6 @@
 {
-  "name": "Brick & Decor PWA v0.14 L1.5 Quotation + Signing",
-  "short_name": "B&D v0.14",
+  "name": "Brick & Decor PWA v0.15 L1.6 UX + E-sign Repair",
+  "short_name": "B&D v0.15",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F6F4EF",

@@ -1,0 +1,28 @@
+Brick & Decor PWA continuation state — v0.15 L1.6 UX + E-sign Repair
+
+Baseline: v0.14.1 startup hotfix with v0.14 quotation/signing/media features retained.
+Backend: Supabase foundation + v0.12 backend migration. v0.15 adds 05_v0.15_esign_repair.sql for generic document E-sign RPCs.
+
+Completed in v0.15:
+- Pointer-safe reusable ID/customer signature pads.
+- Assigned-ID signature status corrected.
+- Professional Services simplified and editable/resettable per quotation.
+- Professional Services customer output omits Qty 1 Lot.
+- Description line breaks preserved.
+- Master Data Work Section / Property Type libraries redesigned as visual manageable lists.
+- Hidden-iframe print flow removes leftover about:blank tab.
+- LOA and other document print signatures preserve two-column layout.
+- Generic LOA/VO/Handover E-sign moved to *_v15 RPCs and schema cache reload migration.
+
+Deployment order:
+1. Run 05_v0.15_esign_repair.sql in Supabase.
+2. Deploy ZIP contents to brick-decor-pwa-test main branch.
+3. Test ?v=0151.
+
+Recommended smoke tests:
+- Reopen My ID Signature and draw 3 separate strokes; pointer must stop after mouse-up.
+- Verify quotation Assigned ID signature badge.
+- Edit Professional Services and reset.
+- Enter a multiline description and confirm PWA + print preserve line breaks.
+- Print quotation / LOA; no about:blank tab remains after print/cancel.
+- Generate LOA Customer E-sign Link after SQL 05 and open it on another device/incognito.

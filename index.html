@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Brick &amp; Decor PWA v0.14 L1.5 Quotation + Signing</title><link rel="manifest" href="manifest.json"><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Brick &amp; Decor PWA v0.14.1 Startup Hotfix</title><link rel="manifest" href="manifest.json"><style>
 :root{--r:#B88746;--rs:#F7F0E6;--bg:#F6F4EF;--c:#fff;--l:#E5DED2;--t:#17202A;--m:#6B7280;--g:#16845B;--o:#B7791F;--b:#1F4E79;--d:#B42318;--nav:#0E1A2B;--nav2:#14243A;--gold:#D6B06A;--sh:0 14px 36px rgba(23,32,42,.08)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:"Segoe UI",Roboto,Arial,sans-serif;color:var(--t);letter-spacing:.01em}button,input,select,textarea{font:inherit}.app{display:flex;min-height:100vh}
 .side{position:fixed;inset:0 auto 0 0;width:252px;background:linear-gradient(180deg,var(--nav),#111827);border-right:1px solid rgba(255,255,255,.08);padding:22px 18px;overflow:auto}.main{margin-left:252px;width:calc(100% - 252px)}
@@ -1333,16 +1333,22 @@ function v11LoadSession(){try{V11_SESSION=JSON.parse(localStorage.getItem(V11_SE
 function v11SaveSession(s){V11_SESSION=s||null;if(s)localStorage.setItem(V11_SESSION_KEY,JSON.stringify(s));else localStorage.removeItem(V11_SESSION_KEY);}
 function v11SessionExpired(){return !V11_SESSION?.access_token || (V11_SESSION.expires_at && Date.now()>=(Number(V11_SESSION.expires_at)*1000-60000));}
 async function v11ParseResponse(r){const t=await r.text();let data=null;try{data=t?JSON.parse(t):null}catch(_){data=t}if(!r.ok){const msg=(data&&typeof data==='object'&&(data.message||data.msg||data.error_description||data.error))||t||`HTTP ${r.status}`;const e=new Error(msg);e.status=r.status;e.data=data;throw e}return data;}
+async function v141Fetch(url,options={},timeoutMs=9000){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{return await fetch(url,{...options,signal:controller.signal});}
+  catch(e){if(e?.name==='AbortError')throw new Error('Backend connection timed out. Please check your connection and try again.');throw e;}
+  finally{clearTimeout(timer);}
+}
 async function v11RefreshSession(){
   if(!V11_SESSION?.refresh_token)throw new Error('Session expired. Please sign in again.');
-  const r=await fetch(`${V11_SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{apikey:V11_SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:V11_SESSION.refresh_token})});
+  const r=await v141Fetch(`${V11_SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{apikey:V11_SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:V11_SESSION.refresh_token})});
   const d=await v11ParseResponse(r);d.expires_at=Math.floor(Date.now()/1000)+Number(d.expires_in||3600);v11SaveSession(d);return d;
 }
 async function v11EnsureSession(){if(!V11_SESSION)v11LoadSession();if(v11SessionExpired())await v11RefreshSession();return V11_SESSION;}
 async function v11Api(path,{method='GET',body,auth=true,headers={},retry=true}={}){
   if(auth)await v11EnsureSession();
   const h={apikey:V11_SUPABASE_KEY,...headers};if(body!==undefined)h['Content-Type']='application/json';if(auth&&V11_SESSION?.access_token)h.Authorization=`Bearer ${V11_SESSION.access_token}`;
-  const r=await fetch(V11_SUPABASE_URL+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)});
+  const r=await v141Fetch(V11_SUPABASE_URL+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)});
   if(r.status===401&&auth&&retry&&V11_SESSION?.refresh_token){await v11RefreshSession();return v11Api(path,{method,body,auth,headers,retry:false});}
   return v11ParseResponse(r);
 }
@@ -1361,7 +1367,7 @@ function v11RenderLogin(message=''){
 async function v11SignIn(){
   if(V11_AUTH_BUSY)return;const email=document.getElementById('v11_email')?.value.trim(),password=document.getElementById('v11_password')?.value;if(!email||!password)return v11AuthMessage('Enter email and password.');
   V11_AUTH_BUSY=true;const b=document.getElementById('v11_login_btn');if(b){b.disabled=true;b.innerHTML='<span class="v11Spinner"></span>Signing in…'};
-  try{const r=await fetch(`${V11_SUPABASE_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:V11_SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});const d=await v11ParseResponse(r);d.expires_at=Math.floor(Date.now()/1000)+Number(d.expires_in||3600);v11SaveSession(d);await v11AfterLogin();}
+  try{const r=await v141Fetch(`${V11_SUPABASE_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:V11_SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});const d=await v11ParseResponse(r);d.expires_at=Math.floor(Date.now()/1000)+Number(d.expires_in||3600);v11SaveSession(d);await v11AfterLogin();}
   catch(e){v11AuthMessage(e.message||'Unable to sign in.');if(b){b.disabled=false;b.textContent='Sign In'}}finally{V11_AUTH_BUSY=false;}
 }
 async function v11SignOut(){try{if(V11_SESSION?.access_token)await v11Api('/auth/v1/logout',{method:'POST',body:{},auth:true})}catch(_){}v11SaveSession(null);V11_PROFILE=null;if(V11_POLL_TIMER)clearInterval(V11_POLL_TIMER);v11RenderLogin('Signed out.');}
@@ -2139,5 +2145,193 @@ async function v11Boot(){
   (S.quotes||[]).forEach(v14EnsureStandard);save();
 })();
 
-</script><script>if($('modal'))$('modal').onclick=e=>{if(e.target.id=='modal')closeModal()};v11Boot();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script><script>
+/* Brick & Decor PWA v0.15 — L1.6 UX, Signature, Print & E-sign Repair */
+(function(){
+  const V15_VERSION='0.15';
+
+  // ---------------------------------------------------------------------------
+  // A. Signature pad — pointer-safe on desktop + touch, reusable after every stroke.
+  // ---------------------------------------------------------------------------
+  function v15BindSignaturePad(canvas,onDirty,existingData=''){
+    if(!canvas)return;
+    const ctx=canvas.getContext('2d');
+    ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#17202A';
+    canvas.style.touchAction='none';
+    let drawing=false,last=null,pointerId=null;
+    const point=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)}};
+    const stop=e=>{
+      if(pointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==pointerId)return;
+      drawing=false;last=null;
+      if(pointerId!==null){try{if(canvas.hasPointerCapture?.(pointerId))canvas.releasePointerCapture(pointerId);}catch(_){} }
+      pointerId=null;
+    };
+    canvas.onpointerdown=e=>{
+      if(e.pointerType==='mouse'&&e.button!==0)return;
+      e.preventDefault();drawing=true;pointerId=e.pointerId;last=point(e);
+      try{canvas.setPointerCapture?.(pointerId);}catch(_){}
+    };
+    canvas.onpointermove=e=>{
+      if(!drawing||e.pointerId!==pointerId)return;
+      e.preventDefault();const p=point(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;onDirty?.();
+    };
+    canvas.onpointerup=stop;canvas.onpointercancel=stop;canvas.onlostpointercapture=stop;
+    if(existingData){const im=new Image();im.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(im,0,0,canvas.width,canvas.height);onDirty?.();};im.src=existingData;}
+  }
+
+  v14InitSignaturePad=function(){
+    const c=$('v14_sig_canvas');if(!c)return;v14SignDirty=false;
+    const sig=v14StaffSig(user().id);
+    v15BindSignaturePad(c,()=>{v14SignDirty=true;},sig?.data||'');
+  };
+  v10InitSignaturePad=function(){
+    const c=document.getElementById('v10_sign_canvas');if(!c)return;v10SignatureDirty=false;
+    v15BindSignaturePad(c,()=>{v10SignatureDirty=true;});
+  };
+  window.v14ClearMySignature=function(){const c=$('v14_sig_canvas');if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);v14SignDirty=false;};
+  window.v14SaveMySignature=function(){
+    const c=$('v14_sig_canvas'),name=$('v14_sig_name')?.value.trim();
+    if(!name||!v14SignDirty)return toast('Enter your name and sign first');
+    S.userSignatures[user().id]={name,data:c.toDataURL('image/png'),date:new Date().toISOString()};
+    save();closeModal();toast('Signature saved');show(active);
+  };
+
+  // Signature summary now describes the IDs assigned to THIS case rather than only the logged-in user.
+  v14SignatureSummary=function(){
+    const q=S.quotes.find(x=>x.id===qDetail),p=S.projects.find(x=>x.id===q?.p)||{},ids=v14PrimaryIds(p);
+    if(!ids.length)return '<span class="pill orange">No ID assigned</span>';
+    return `<span class="v15AssignedSigStatus">${ids.map(id=>v14StaffSig(id)?`<span class="pill green">${esc(uname(id))} signed</span>`:`<span class="pill orange">${esc(uname(id))} signature required</span>`).join(' ')}</span>`;
+  };
+  const v15BaseGenerateCustomerLink=generateCustomerLink;
+  generateCustomerLink=async function(qid){
+    const q=S.quotes.find(x=>x.id===qid),p=S.projects.find(x=>x.id===q?.p)||{};if(!q)return;
+    const ids=v14PrimaryIds(p),signed=ids.filter(id=>!!v14StaffSig(id));
+    if(!signed.length){
+      const names=ids.map(uname).filter(Boolean).join(', ')||'Assigned ID';
+      modal(`<h2>ID Signature Required</h2><div class="warnbox">Before sending the customer E-sign link, a signature from an assigned ID is required.<br><br><b>Assigned ID:</b> ${esc(names)}</div>${ids.includes(user().id)?'<button class="btn p" onclick="closeModal();v14OpenMySignature()">Sign Now</button> ':''}<button class="btn" onclick="closeModal()">Close</button>`);
+      return;
+    }
+    return v15BaseGenerateCustomerLink(qid);
+  };
+
+  // ---------------------------------------------------------------------------
+  // B. Professional Services — fixed defaults are clean, editable per quotation.
+  // ---------------------------------------------------------------------------
+  v14EnsureStandard=function(q){
+    if(!q||q.standardProfessionalRemoved)return;
+    q.items=q.items||[];
+    const current=q.items.filter(i=>i.standardFixed);
+    current.forEach((it,n)=>{if(it.standardKey===undefined||it.standardKey===null)it.standardKey=n;it.section='Professional Services';it.area='Professional Services';it.cat='Professional Services';if(!it.pricingType)it.pricingType='Complimentary';if(it.qty===undefined)it.qty=1;if(it.cost===undefined)it.cost=0;});
+    V14_STANDARD.forEach((name,key)=>{
+      if(!q.items.some(i=>i.standardFixed&&Number(i.standardKey)===key))q.items.push({custom:false,name,cat:'Professional Services',desc:'',unit:'',qty:1,cost:0,price:0,area:'Professional Services',section:'Professional Services',pricingType:'Complimentary',standardFixed:true,standardKey:key});
+    });
+  };
+  function v15StandardItems(q){v14EnsureStandard(q);return (q.items||[]).filter(i=>i.standardFixed).sort((a,b)=>Number(a.standardKey||0)-Number(b.standardKey||0));}
+  window.v15EditStandardServices=function(){
+    const q=S.quotes.find(x=>x.id===qDetail);if(!q)return;const rows=v15StandardItems(q);
+    modal(`<div class="v15StdModal"><div class="sectionToolbar"><div><h2>Professional Services</h2><p class="small">These services are preloaded on every quotation. Edit wording or customer price for this quotation only. Qty and internal cost are intentionally hidden.</p></div><button class="btn" onclick="v15ResetStandardServices()">Reset to Standard</button></div><div class="v15StdRows">${rows.map((it,n)=>`<div class="v15StdRow" data-key="${Number(it.standardKey)}"><div class="field v15StdName"><label>Service ${n+1}</label><input class="v15_std_name" value="${esc(it.name)}"></div><div class="field v15StdDesc"><label>Description (optional)</label><textarea class="v15_std_desc" rows="2">${esc(it.desc||'')}</textarea></div><div class="field"><label>Customer Price</label><select class="v15_std_type" onchange="v15StdTypeChanged(this)">${['Complimentary','Inclusive','F.O.C','Amount'].map(x=>`<option ${x===it.pricingType?'selected':''}>${x}</option>`).join('')}</select></div><div class="field v15StdAmount" style="display:${it.pricingType==='Amount'?'block':'none'}"><label>Amount</label><input class="v15_std_price" type="number" min="0" step="0.01" value="${Number(it.price||0)}"></div></div>`).join('')}</div><div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn p" onclick="v15SaveStandardServices()">Save Professional Services</button></div></div>`);
+  };
+  window.v15StdTypeChanged=function(sel){const row=sel.closest('.v15StdRow');if(row)row.querySelector('.v15StdAmount').style.display=sel.value==='Amount'?'block':'none';};
+  window.v15SaveStandardServices=function(){
+    const q=S.quotes.find(x=>x.id===qDetail);if(!q)return;
+    document.querySelectorAll('.v15StdRow').forEach(row=>{const key=Number(row.dataset.key),it=(q.items||[]).find(x=>x.standardFixed&&Number(x.standardKey)===key);if(!it)return;it.name=row.querySelector('.v15_std_name').value.trim()||V14_STANDARD[key]||it.name;it.desc=row.querySelector('.v15_std_desc').value.trim();it.pricingType=row.querySelector('.v15_std_type').value;it.price=it.pricingType==='Amount'?(+row.querySelector('.v15_std_price').value||0):0;it.qty=1;it.unit='';it.cost=0;});
+    save();closeModal();show('quotation');toast('Professional Services updated');
+  };
+  window.v15ResetStandardServices=function(){
+    const q=S.quotes.find(x=>x.id===qDetail);if(!q)return;v14EnsureStandard(q);
+    v15StandardItems(q).forEach(it=>{const key=Number(it.standardKey||0);it.name=V14_STANDARD[key]||it.name;it.desc='';it.pricingType='Complimentary';it.price=0;it.qty=1;it.unit='';it.cost=0;});
+    save();closeModal();show('quotation');toast('Professional Services reset');
+  };
+
+  v14ItemCell=function(it,seen){
+    const desc=it.desc?`<div class="v14PrintDesc">${esc(it.desc).replace(/\n/g,'<br>')}</div>`:'';
+    const isStandard=!!it.standardFixed||(it.section==='Professional Services'&&it.area==='Professional Services');const qty=isStandard?'':`<span class="v14PrintQty">${Number(it.qty||0)} ${esc(it.unit||'')}</span>`;
+    return `<b>${esc(it.name)}</b>${desc}${qty}${v14UpgradeMedia(it.name,seen)}`;
+  };
+  v14BuilderScope=function(q){
+    v14EnsureStandard(q);const groups=v14BuildGroups(q.items||[]),out=[];
+    if(q.standardProfessionalRemoved)out.push(`<div class="soft v14RestoreStandard"><div><b>Standard Professional Services removed</b><div class="small">This section is normally included in every quotation.</div></div><button class="btn s" onclick="v14RestoreStandardSection()">Restore Section</button></div>`);
+    Object.entries(groups).forEach(([section,areas])=>{
+      const standard=section==='Professional Services'&&Object.values(areas).some(g=>g.normal.some(x=>x.it.standardFixed));
+      out.push(`<div class="v14BuilderSection"><div class="v14BuilderSectionHead"><div><span class="small">WORK SECTION</span><h3>${esc(section)}</h3></div><div class="actions">${standard?'<span class="pill green">Standard Default</span><button class="btn s" onclick="v15EditStandardServices()">Edit Services</button><button class="btn s" onclick="v15ResetStandardServices()">Reset</button><button class="btn s r" onclick="v14RemoveStandardSection()">Remove Section</button>':'<button class="btn s" onclick="addQItem()">+ Add Area / Items</button>'}</div></div>`);
+      Object.entries(areas).forEach(([area,g])=>{
+        const hideArea=standard&&area==='Professional Services';if(!hideArea)out.push(`<div class="v14BuilderAreaHead"><b>${esc(area)}</b><span>${g.normal.length+Object.values(g.combined).reduce((a,x)=>a+x.length,0)} item(s)</span></div>`);out.push('<div class="v14BuilderArea">');
+        g.normal.forEach(({it,n})=>{
+          if(it.standardFixed){out.push(`<div class="v15StandardLine"><div><b>${esc(it.name)}</b>${it.desc?`<div class="desc v15Preline">${esc(it.desc)}</div>`:''}</div><div class="v14BuilderAmount">${itemCounts(it)?money(Number(it.price||0)):`<span class="amountWord">${esc(it.pricingType||'Complimentary')}</span>`}</div></div>`);return;}
+          out.push(`<div class="v14BuilderLine"><div><b>${esc(it.name)}</b>${it.desc?`<div class="desc v15Preline">${esc(it.desc)}</div>`:''}<div class="internal">Qty ${Number(it.qty||0)} ${esc(it.unit||'')} • Internal Cost ${money(Number(it.qty||0)*Number(it.cost||0))}</div></div><div class="v14BuilderAmount">${itemCounts(it)?money(Number(it.qty||0)*Number(it.price||0)):`<span class="amountWord">${esc(it.pricingType||'Inclusive')}</span>`}</div><div><button class="btn s" onclick="editQuoteItem(${n})">Edit</button> <button class="btn s r" onclick="S.quotes.find(x=>x.id===qDetail).items.splice(${n},1);save();show('quotation')">Delete</button></div></div>`);
+        });
+        Object.entries(g.combined).forEach(([gid,members])=>{const ch=g.charges[gid]?.it,amount=Number(ch?.price||members[0]?.it?.lumpGroupAmount||0),label=ch?.lumpGroupLabel||ch?.name||members[0]?.it?.lumpGroupLabel||`${area} Package`,cost=members.reduce((a,x)=>a+Number(x.it.qty||0)*Number(x.it.cost||0),0);out.push(`<div class="v14CombinedCard"><div class="v14CombinedHead"><div><span class="pill orange">Combined Amount</span><b>${esc(label)}</b><span class="small">${members.length} item(s) • Internal est. ${money(cost)}</span></div><div class="v14CombinedValue">${money(amount)}</div></div><div class="v14CombinedList">${members.map(({it})=>`<div>• <b>${esc(it.name)}</b>${it.desc?`<div class="v15Preline v15CombinedDesc">${esc(it.desc)}</div>`:''}</div>`).join('')}</div><div class="actions"><button class="btn s" onclick="v13EditLumpGroup('${gid}')">Edit Group</button><button class="btn s r" onclick="v13DeleteLumpGroup('${gid}')">Delete Group</button></div></div>`);});
+        out.push('</div>');
+      });out.push('</div>');
+    });return out.join('');
+  };
+
+  // ---------------------------------------------------------------------------
+  // C. Master Data — replace text-only libraries with manageable visual lists.
+  // ---------------------------------------------------------------------------
+  function v15LibraryCard(kind,title,items,help){return `<div class="card v15LibraryCard"><div class="v15LibraryHead"><div><h3>${esc(title)}</h3><p class="small">${esc(help)}</p></div><button class="btn s" onclick="v15ManageLibrary('${kind}')">Manage Library</button></div><div class="v15LibraryList">${items.length?items.map((x,n)=>`<div class="v15LibraryItem"><span class="v15LibraryNo">${n+1}</span><b>${esc(x)}</b></div>`).join(''):'<div class="small">No entries yet.</div>'}</div><div class="small" style="margin-top:9px">${items.length} entr${items.length===1?'y':'ies'}</div></div>`;}
+  window.v15ManageLibrary=function(kind){
+    const isScope=kind==='scope',title=isScope?'Work Section Library':'Property Type Library',items=[...(isScope?S.settings.scopeSections:S.settings.propertyTypes)];
+    modal(`<div class="v15LibraryModal"><div class="sectionToolbar"><div><h2>${title}</h2><p class="small">Add, rename, reorder or remove entries. Changes apply to new selections immediately.</p></div><button class="btn" onclick="v15AddLibraryRow()">+ Add</button></div><div id="v15_library_rows" data-kind="${kind}">${items.map((x,n)=>v15LibraryEditRow(x,n)).join('')}</div><div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn p" onclick="v15SaveLibrary()">Save Library</button></div></div>`);
+  };
+  function v15LibraryEditRow(value,n){return `<div class="v15LibraryEditRow"><span class="v15LibraryNo">${n+1}</span><input class="v15_lib_value" value="${esc(value||'')}" placeholder="Enter name"><div class="actions"><button class="btn s" type="button" onclick="v15MoveLibraryRow(this,-1)">↑</button><button class="btn s" type="button" onclick="v15MoveLibraryRow(this,1)">↓</button><button class="btn s r" type="button" onclick="this.closest('.v15LibraryEditRow').remove();v15RenumberLibraryRows()">Delete</button></div></div>`;}
+  window.v15AddLibraryRow=function(){const h=$('v15_library_rows');if(!h)return;h.insertAdjacentHTML('beforeend',v15LibraryEditRow('',h.children.length));v15RenumberLibraryRows();h.lastElementChild?.querySelector('input')?.focus();};
+  window.v15RenumberLibraryRows=function(){document.querySelectorAll('#v15_library_rows .v15LibraryEditRow').forEach((r,n)=>r.querySelector('.v15LibraryNo').textContent=n+1);};
+  window.v15MoveLibraryRow=function(btn,dir){const r=btn.closest('.v15LibraryEditRow'),p=r?.parentElement;if(!r||!p)return;const sib=dir<0?r.previousElementSibling:r.nextElementSibling;if(!sib)return;if(dir<0)p.insertBefore(r,sib);else p.insertBefore(sib,r);v15RenumberLibraryRows();};
+  window.v15SaveLibrary=function(){const h=$('v15_library_rows');if(!h)return;const vals=[...h.querySelectorAll('.v15_lib_value')].map(x=>x.value.trim()).filter(Boolean);const unique=[...new Set(vals)];if(h.dataset.kind==='scope')S.settings.scopeSections=unique;else S.settings.propertyTypes=unique;save();closeModal();show('master');toast('Library saved');};
+
+  P.master=()=>head('Master Data','Pricing, workflow settings, visual libraries, templates and manpower rates.','Master Data','<button class="btn p" onclick="saveSet()">Save Settings</button>')+`<div class="grid three"><div class="card"><h3>Rules</h3>${field('st_n','Normal Markup %',S.settings.normal,'number')}${field('st_m','Max Markup %',S.settings.max,'number')}${field('st_p','Payment Trigger %',S.settings.payPct,'number')}${field('st_f','Quotation Follow-up Days',S.settings.followDays,'number')}${v08Select('st_approval','After Client Approves Quotation',['Auto Project Confirmed','Require Superadmin Confirmation'],S.settings.clientApprovalFlow)}</div><div class="card"><h3>3 Quotation Templates</h3>${S.settings.templates.map((t,i)=>field('tpl'+i,'Template '+(i+1),t)).join('')}</div><div class="card"><h3>Manpower Rates</h3>${field('rt_c','Carpenter / Hour',S.settings.rates.carpenter,'number')}${field('rt_i','Installer / Hour',S.settings.rates.installer,'number')}${field('rt_t','Technician / Hour',S.settings.rates.technician,'number')}</div></div><br><div class="grid two">${v15LibraryCard('scope','Work Section Library',S.settings.scopeSections||[],'Used first when building a quotation scope. Custom sections remain available.')}${v15LibraryCard('property','Property Type Library',S.settings.propertyTypes||[],'Used when creating or editing a Case / Project.')}</div><br><div class="grid two"><div class="card"><h3>Company Document Templates</h3><p>Quotation/T&C, LOA, Invoice, VO, Handover and payment schedule are edited per company in Company Master.</p><button class="btn" onclick="show('companies')">Open Company Master</button></div><div class="card"><h3>Item Master</h3><div class="wrap"><table><tr><th>Item</th><th>Category</th><th>Description</th><th>Cost</th><th>Min</th><th>Max</th></tr>${S.items.map(i=>`<tr><td>${esc(i.name)}</td><td>${esc(i.cat)}</td><td class="v15Preline">${esc(i.desc)}</td><td>${money(i.cost)}</td><td>${money(i.cost*(1+S.settings.normal/100))}</td><td>${money(i.cost*(1+S.settings.max/100))}</td></tr>`).join('')}</table></div></div></div>`;
+  saveSet=function(){S.settings.normal=+$('st_n').value||30;S.settings.max=+$('st_m').value||40;S.settings.payPct=+$('st_p').value||30;S.settings.followDays=+$('st_f').value||10;S.settings.clientApprovalFlow=$('st_approval').value;S.settings.templates=S.settings.templates.map((_,i)=>$('tpl'+i).value);S.settings.rates={carpenter:+$('rt_c').value||0,installer:+$('rt_i').value||0,technician:+$('rt_t').value||0};save();toast('Master settings saved');show('master');};
+
+  // ---------------------------------------------------------------------------
+  // D. Printing — print from a hidden iframe; never leave an about:blank tab.
+  //     Preserve two-column signatures for LOA / quotation / VO / handover.
+  // ---------------------------------------------------------------------------
+  function v15PrintCss(){return `
+    @page{size:A4 portrait;margin:9mm 12mm 12mm}*{box-sizing:border-box}html,body{margin:0;padding:0;color:#111;background:#fff;font-family:Arial,sans-serif}body{font-size:9px}.v15PrintBody{width:100%;max-width:185mm;margin:0 auto}table{width:100%;border-collapse:collapse}th,td{vertical-align:top}.previewPaper,.invoicePaper{box-shadow:none!important;border:0!important;padding:0!important;max-width:none!important;margin:0!important}.v14DocumentRoot,.v14StandaloneDoc{width:100%;max-width:185mm;margin:0 auto}.v14PrintFrame{width:100%}.v14PrintFrame>thead{display:table-header-group}.v14PrintFrame>tfoot{display:table-footer-group}.v14PrintFrame>tbody{display:table-row-group}.v14PrintFrame>thead td,.v14PrintFrame>tfoot td,.v14PrintFrame>tbody td{border:0;padding:0}.v14DocHeader{display:flex!important;justify-content:space-between;gap:15mm;align-items:flex-start;margin:0 0 5px}.v14DocHeader img{width:45mm;max-height:25mm;object-fit:contain;object-position:left top}.v14DocHeader>div:last-child{text-align:right;font-size:7.6px;line-height:1.3;max-width:72mm}.v14QuoteInfo{margin:5px 0}.v14QuoteInfo td{border:1px solid #555;padding:2px 4px;font-size:7.7px}.v14QuoteInfo td:nth-child(1),.v14QuoteInfo td:nth-child(3){font-weight:700;width:13%}.v14QuoteTitle{text-align:center;text-decoration:underline;font-weight:800;font-size:9px;margin:3px 0}.v14QuoteIntro{text-align:center;font-size:7.7px;line-height:1.25;margin:0 7% 5px}.v14PrintSection{font-weight:900;font-size:10px;border-top:1px solid #333;padding:4px 3px 2px;margin-top:4px}.v14PrintArea{font-weight:800;font-size:9px;background:#eee;padding:3px 5px;border:1px solid #aaa;border-bottom:0}.v14ScopeTable{margin-bottom:4px;table-layout:fixed}.v14ScopeTable th,.v14ScopeTable td{border:1px solid #aaa;padding:3px 4px;font-size:7.8px;vertical-align:top}.v14ScopeTable th:last-child,.v14ScopeTable td:last-child{width:27mm;text-align:right}.v14PrintDesc,.v14CombinedItems span,.v15Preline{font-size:7.3px;color:#444;margin-top:2px;white-space:pre-line}.v14PrintQty{display:block;font-size:7px;color:#666;margin-top:2px}.v14CombinedItems{margin-top:3px;line-height:1.25}.v14CombinedItems span{display:block;margin-left:8px}.v14UpgradeMedia{margin:4px 0 2px;break-inside:avoid}.v14UpgradeMedia img{max-width:62mm;max-height:32mm;object-fit:contain}.v14Totals{width:72mm;margin:5px 0 4px auto}.v14Totals td{border-bottom:1px solid #ccc;padding:2px 4px;font-size:8px}.v14Totals td:first-child{text-align:right;font-weight:700}.v14Totals td:last-child{text-align:right}.v14PayTitle{font-size:8.5px;margin:5px 0 2px}.v14Payment td{border:1px solid #ccc;padding:2px 4px;font-size:7.5px}.v14PageSignatures,.v14TermsSignatures{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:18mm!important;align-items:start;margin-top:10mm;break-inside:avoid;page-break-inside:avoid}.v14StandaloneDoc .v14TermsSignatures{margin-top:18mm}.v14IdSignGroup{display:flex;gap:8mm;flex-wrap:wrap}.v14PersonSign{min-width:45mm;line-height:1.25;font-size:7.5px}.v14PersonSign img{display:block;width:38mm;height:13mm;object-fit:contain;object-position:left bottom}.v14SignLine{height:13mm;border-bottom:1px solid #222;width:40mm}.v14PersonSign b,.v14PersonSign span,.v14PersonSign small{display:block;font-size:7.4px}.v14EsignMark{height:13mm;display:flex;align-items:end;font-style:italic;font-weight:700}.v14TermsPage{break-before:page;page-break-before:always;margin:0;padding-top:0}.v14TermsPage h2{text-align:center;font-size:12px}.v14TermsText{font-size:7.5px;line-height:1.28;white-space:pre-line}.v14ScopeTable tr,.v14UpgradeMedia{break-inside:avoid;page-break-inside:avoid}.v14StandaloneTitle{text-align:center;font-size:13px;margin:6mm 0}.v14HandoverFields td{padding:3px 2px;border:0}.v14StandaloneDoc p,.v14StandaloneDoc li{font-size:8.2px;line-height:1.4}.invoiceHeader{display:grid;grid-template-columns:1.2fr .8fr;gap:10mm;align-items:start;padding-bottom:4mm;border-bottom:1px solid #222}.invoiceHeader img{width:45mm;height:22mm;object-fit:contain;object-position:left center}.invoiceCompany{text-align:right;font-size:7.5px;line-height:1.35}.invoiceTitle{font-size:16px;font-weight:900;margin:5mm 0 3mm}.invoiceMetaGrid{display:grid;grid-template-columns:1fr 1fr;gap:5mm}.invoiceMetaBox{border:1px solid #ccc;padding:3mm;font-size:8px}.invoiceTable th,.invoiceTable td{border:1px solid #ccc;padding:2mm;font-size:8px}.invoiceTotals{width:80mm;margin:4mm 0 0 auto}.invoiceTotals td{padding:2mm;font-size:8px}.invoiceFooter{margin-top:5mm;border-top:1px solid #ccc;padding-top:3mm;font-size:8px}button,.btn,.v14PreviewActions{display:none!important}`;}
+  function v15WaitForImages(doc){const imgs=[...doc.images];return Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(res=>{img.onload=img.onerror=res;})));}
+  printDoc=function(t,b){
+    const old=document.getElementById('v15_print_frame');if(old)old.remove();
+    const f=document.createElement('iframe');f.id='v15_print_frame';f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:.001;pointer-events:none;z-index:-1';document.body.appendChild(f);
+    const d=f.contentDocument,w=f.contentWindow;d.open();d.write(`<!doctype html><html><head><meta charset="utf-8"><base href="${esc(location.href)}"><title>${esc(t)}</title><style>${v15PrintCss()}</style></head><body><div class="v15PrintBody">${b}</div></body></html>`);d.close();
+    const cleanup=()=>setTimeout(()=>{try{f.remove();}catch(_){}},300);
+    v15WaitForImages(d).finally(()=>setTimeout(()=>{try{w.focus();w.addEventListener('afterprint',cleanup,{once:true});w.print();setTimeout(cleanup,60000);}catch(e){cleanup();toast('Unable to open print preview');console.error(e);}},180));
+  };
+
+  // ---------------------------------------------------------------------------
+  // E. v0.15 document E-sign RPCs. 05_v0.15_esign_repair.sql installs these.
+  // ---------------------------------------------------------------------------
+  v14CreateDocumentEsign=async function(type,no,coCode,caseNo,html){
+    if(!V11_PROFILE||!V11_SESSION?.access_token)return toast('Sign in to Supabase first');
+    const project=S.projects.find(x=>x.id===caseNo)||{},assigned=v14PrimaryIds(project),signerId=assigned.find(id=>!!v14StaffSig(id))||(!assigned.length&&v14StaffSig(user().id)?user().id:null),sig=signerId?v14StaffSig(signerId):null;
+    if(!sig){const names=assigned.map(uname).filter(Boolean).join(', ')||'Assigned ID';modal(`<h2>ID Signature Required</h2><div class="warnbox">A signature from the assigned ID is required before this document can be sent for customer E-sign.<br><br><b>Assigned ID:</b> ${esc(names)}</div>${assigned.includes(user().id)?'<button class="btn p" onclick="closeModal();v14OpenMySignature()">Sign Now</button> ':''}<button class="btn" onclick="closeModal()">Close</button>`);return;}
+    modal(`<h2>Creating Secure E-sign Link</h2><div class="goodbox"><span class="v11Spinner"></span>Preparing ${esc(type)} for customer signing…</div>`);
+    try{
+      const r=await v11Rpc('create_document_esign_request_v15',{p_company_id:v11CompanyUuid(coCode),p_local_case_no:'LOCAL-'+caseNo,p_document_type:type,p_document_no:no,p_document_snapshot:{html,company:co(coCode),document_type:type,document_no:no},p_staff_signer_name:sig.name,p_staff_signature_data:sig.data,p_expires_days:14},true),link=`${location.origin}${location.pathname}?docsign=${encodeURIComponent(r.token)}`;
+      S.documentEsign.push({id:r.id,type,no,status:'PENDING',expiresAt:r.expires_at});save();
+      modal(`<h2>Secure ${esc(type)} E-sign Link</h2><div class="goodbox"><b>${esc(no)}</b><br>Customer can open this link on another phone/computer and sign.</div><div class="field"><label>Customer Link</label><div class="v10LinkRow"><input id="v10_esign_link" readonly value="${esc(link)}"><button class="btn" onclick="v10CopyLink()">Copy</button><button class="btn p" onclick="window.open($('v10_esign_link').value,'_blank')">Preview Link</button></div></div><p class="small">Expires ${esc(new Date(r.expires_at).toLocaleString())}</p><button class="btn" onclick="closeModal()">Close</button>`);
+    }catch(e){modal(`<h2>Unable to Create Document E-sign Link</h2><div class="dangerbox"><b>${esc(e.message||'Unknown error')}</b></div><p class="small">Run <b>05_v0.15_esign_repair.sql</b> once in Supabase SQL Editor, then retry. This migration also reloads the API schema cache.</p><button class="btn" onclick="closeModal()">Close</button>`);}
+  };
+  v14RenderDocumentSign=async function(token){
+    document.body.innerHTML='<div class="v11Loading"><div><span class="v11Spinner"></span>Loading secure document…</div></div>';
+    try{const r=await v11Rpc('get_document_esign_request_v15',{p_token:token},false);if(!r?.ok)throw new Error('This document signing link is invalid or unavailable.');const s=r.snapshot||{};if(r.status!=='PENDING'){document.body.innerHTML=`<div class="v10ClientShell"><div class="v10ClientPaper"><h2>${r.status==='SIGNED'?'Already signed':'Link unavailable'}</h2><div class="${r.status==='SIGNED'?'goodbox':'dangerbox'}">${r.status==='SIGNED'?`Signed by <b>${esc(r.signed_by||'customer')}</b> on ${esc(new Date(r.signed_at).toLocaleString())}.`:`This link is ${esc(String(r.status||'').toLowerCase())}.`}</div></div></div>`;return;}document.body.innerHTML=`<div id="v14DocSignPage"><div class="v10ClientShell"><div class="v10ClientPaper v14PublicDoc"><div class="v11PublicStatus"><span class="pill green">Secure Supabase E-sign</span><span class="small">${esc(r.document_type||'Document')} • Expires ${esc(new Date(r.expires_at).toLocaleString())}</span></div>${s.html||''}<div class="v10SignBlock"><h3>Customer E-signature</h3><p class="small">Please review the document above before signing.</p><label>Full Name</label><input id="v10_sign_name" value="${esc(r.customer_name||'')}" placeholder="Customer full name"><canvas id="v10_sign_canvas" width="900" height="260"></canvas><div class="v10SignActions"><button onclick="v10ClearSignature()">Clear Signature</button></div><label class="v10Accept"><input id="v10_sign_accept" type="checkbox"> I confirm that I have reviewed and agree to this document.</label><button id="v14_doc_submit" class="v10SubmitSign" onclick="v14SubmitDocumentEsign('${esc(token)}')">Sign & Confirm</button></div></div></div></div>`;v10SignatureDirty=false;setTimeout(v10InitSignaturePad,0);}catch(e){document.body.innerHTML=`<div class="v10ClientShell"><div class="v10ClientPaper"><h2>Unable to open document</h2><div class="dangerbox">${esc(e.message||'Unable to load the signing link.')}</div></div></div>`;}
+  };
+  v14SubmitDocumentEsign=async function(token){const name=$('v10_sign_name')?.value.trim(),ok=$('v10_sign_accept')?.checked,c=$('v10_sign_canvas'),b=$('v14_doc_submit');if(!name||!ok||!v10SignatureDirty)return alert('Please enter your name, sign and tick the confirmation.');try{if(b){b.disabled=true;b.textContent='Submitting…';}const r=await v11Rpc('submit_document_esign_v15',{p_token:token,p_signed_by:name,p_signature_data:c.toDataURL('image/png'),p_user_agent:navigator.userAgent||''},false);$('v14DocSignPage').innerHTML=`<div class="v10ClientShell"><div class="v10ClientPaper"><div class="goodbox"><h2>Thank you, ${esc(name)}.</h2>The signed document has been returned securely to Brick & Decor.<br><span class="small">${esc(new Date(r.signed_at||Date.now()).toLocaleString())}</span></div></div></div>`;}catch(e){alert(e.message||'Unable to submit signature.');if(b){b.disabled=false;b.textContent='Sign & Confirm';}}};
+  v14FetchDocumentStatus=async function(showToast=false){if(!V11_PROFILE||!V11_SESSION?.access_token)return[];try{const rows=await v11Rpc('list_my_document_esign_requests_v15',{},true);(rows||[]).forEach(r=>{const ex=S.documentEsign.find(x=>x.id===r.id);if(ex)Object.assign(ex,{status:r.status,signedBy:r.signed_by,signedAt:r.signed_at});else S.documentEsign.push({id:r.id,type:r.document_type,no:r.document_no,status:r.status,signedBy:r.signed_by,signedAt:r.signed_at});if(r.status==='SIGNED'){if(r.document_type==='HANDOVER'){const d=S.dos.find(x=>x.id===r.document_no);if(d){d.acknowledged=true;d.customerSignedBy=r.signed_by;d.customerSignedAt=r.signed_at;}}if(r.document_type==='VO'){const v=S.vos.find(x=>x.id===r.document_no);if(v){v.clientSignedBy=r.signed_by;v.clientSignedAt=r.signed_at;}}if(r.document_type==='LOA'){const q=S.quotes.find(x=>`${x.id}-LOA`===r.document_no);if(q){q.loaClientSignedBy=r.signed_by;q.loaClientSignedAt=r.signed_at;}}}if(showToast&&r.status==='SIGNED')toast(`${r.document_no} signed by ${r.signed_by||'customer'}`);});save();return rows;}catch(e){console.warn('v0.15 document E-sign:',e.message);return[];}};
+
+  // ---------------------------------------------------------------------------
+  // F. General visual fixes and version label.
+  // ---------------------------------------------------------------------------
+  const v15BaseLayout=layout;layout=function(){v15BaseLayout();const n=document.querySelector('.side .note');if(n)n.innerHTML='<b>v0.15 L1.6 UX + E-sign Repair</b><br>Stable signature drawing, assigned-ID signature status, editable Professional Services, cleaner Master Data libraries, preserved description line breaks, corrected two-column document signatures and tab-free printing.';};
+  const css=document.createElement('style');css.textContent=`
+    .v15Preline,.v14BuilderLine .desc,.v14CombinedList .v15CombinedDesc,.v14CombinedItems span{white-space:pre-line}.v15AssignedSigStatus{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.v15StandardLine{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:14px;align-items:center;padding:11px 0;border-bottom:1px solid #EEEAE3}.v15StdRows{display:grid;gap:10px}.v15StdRow{display:grid;grid-template-columns:minmax(210px,1.2fr) minmax(260px,1.5fr) 170px 150px;gap:10px;border:1px solid var(--l);border-radius:14px;padding:12px;background:#fff;align-items:start}.v15StdDesc textarea{white-space:pre-wrap}.v15LibraryCard{min-height:270px}.v15LibraryHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.v15LibraryHead h3{margin-bottom:4px}.v15LibraryList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.v15LibraryItem{display:flex;gap:9px;align-items:center;border:1px solid var(--l);border-radius:11px;padding:9px 10px;background:#FBFAF7;min-width:0}.v15LibraryItem b{overflow-wrap:anywhere}.v15LibraryNo{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#F1E6D4;color:#7A5526;font-size:11px;font-weight:900;flex:0 0 auto}.v15LibraryEditRow{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px 0;border-bottom:1px solid var(--l)}.v15LibraryEditRow input{width:100%;border:1px solid var(--l);border-radius:10px;padding:10px}.v15LibraryModal{max-width:900px;margin:auto}
+    @media(max-width:900px){.v15StdRow{grid-template-columns:1fr 1fr}.v15LibraryList{grid-template-columns:1fr}}@media(max-width:600px){.v15StdRow{grid-template-columns:1fr}.v15StandardLine{grid-template-columns:1fr}.v15LibraryEditRow{grid-template-columns:28px 1fr}.v15LibraryEditRow .actions{grid-column:2}.v15LibraryHead{display:block}.v15LibraryHead .btn{margin-top:8px}}
+  `;document.head.appendChild(css);
+
+  document.title='Brick & Decor PWA v0.15 L1.6 UX + E-sign Repair';
+  (S.quotes||[]).forEach(v14EnsureStandard);save();
+})();
+</script><script>if($('modal'))$('modal').onclick=e=>{if(e.target.id=='modal')closeModal()};
+Promise.resolve().then(()=>v11Boot()).catch(e=>{console.error('B&D startup failed',e);document.body.innerHTML=`<div class="v11Loading"><div><h2>Unable to start B&D</h2><p>${String(e?.message||e||'Unknown startup error')}</p><button class="btn p" onclick="location.reload()">Retry</button></div></div>`;});
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('Service worker registration failed',e));
 </script></body></html>
