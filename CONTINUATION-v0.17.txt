@@ -1,0 +1,8 @@
+Brick & Decor PWA v0.17
+- Based on v0.16.
+- New SQL: 06_v0.17_signed_copy.sql (read-only signed-copy retrieval for authorised staff).
+- Builder multiline descriptions fixed, including Combined Amount groups.
+- Customer E-sign layout now mirrors the sent quotation and reads nested revision_snapshot company docs/payment/staff signatures.
+- Signed quotation preview/print added with actual customer signature.
+- Signed document retrieval foundation added for LOA/VO/Handover.
+- Next planned testing area after this patch: supplier invoice / Project Cost workflow.

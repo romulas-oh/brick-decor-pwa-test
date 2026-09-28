@@ -2529,6 +2529,148 @@ async function v11Boot(){
   (S.quotes||[]).forEach(q=>v16StandardItems(q).forEach(it=>{it.qty=1;it.unit='';it.cost=0;}));save();
 })();
 
+</script><script>
+/* Brick & Decor PWA v0.17 — multiline builder + faithful customer E-sign + signed copies */
+(function(){
+  const V17_EXCEL='FREE UPGRADE to EXCEL Mola Fermi Soft-Closing Full Extension Undermount Slides';
+  const V17_NIPPON='FREE UPGRADE to NIPPON PAINT Anti Mould for Kitchen & Bathrooms Ceiling';
+  const v17Norm=s=>String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
+  const v17Lines=s=>esc(s||'').replace(/\r?\n/g,'<br>');
+  const v17GroupId=(pricing,prefix)=>String(pricing||'').startsWith(prefix)?String(pricing).slice(prefix.length):'';
+  const v17Money=n=>'$'+Number(n||0).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // -----------------------------------------------------------------------
+  // A. Builder descriptions: exactly the same line structure the ID typed.
+  // -----------------------------------------------------------------------
+  const v17BaseQuoteDetail=quoteDetail;
+  quoteDetail=function(){
+    const html=v17BaseQuoteDetail(),d=document.createElement('div');d.innerHTML=html;
+    d.querySelectorAll('.v14BuilderLine .desc,.v13BuilderLine .desc').forEach(x=>x.classList.add('v17PreWrap'));
+    d.querySelectorAll('.v14CombinedList > div,.v13LumpItems > div').forEach(row=>{
+      const b=row.querySelector('b');if(!b)return;
+      let raw='';[...row.childNodes].forEach(n=>{if(n.nodeType===Node.TEXT_NODE)raw+=n.nodeValue||'';});
+      raw=raw.replace(/^\s*[—–-]\s*/,'').trimEnd();
+      [...row.childNodes].forEach(n=>{if(n.nodeType===Node.TEXT_NODE)n.remove();});
+      if(raw.trim()){
+        const desc=document.createElement('div');desc.className='v17CombinedDesc';desc.textContent=raw.trimStart();row.appendChild(desc);
+      }
+      row.classList.add('v17CombinedItem');
+    });
+    const q=S.quotes.find(x=>x.id===qDetail),p=S.projects.find(x=>x.id===q?.p)||{};
+    if(q){
+      const actions=d.querySelector('.head .actions');
+      if(actions&&(q.esign?.backendStatus==='SIGNED'||q.esign?.status==='SIGNED'||q.clientApproval?.source==='Customer E-sign')){
+        const b=document.createElement('button');b.className='btn g';b.setAttribute('onclick',`v17OpenSignedQuotation('${String(q.id).replace(/'/g,"\\'")}')`);b.textContent='Preview Signed Copy';actions.appendChild(b);
+      }
+      const docNos=new Set([`${q.id}-LOA`,...(S.vos||[]).filter(v=>v.p===p.id).map(v=>v.id),...(S.dos||[]).filter(v=>v.p===p.id).map(v=>v.id)]);
+      const count=(S.documentEsign||[]).filter(x=>docNos.has(x.no)&&x.status==='SIGNED').length;
+      if(actions&&count){const b=document.createElement('button');b.className='btn';b.setAttribute('onclick',`v17SignedDocumentsForCase('${String(p.id).replace(/'/g,"\\'")}','${String(q.id).replace(/'/g,"\\'")}')`);b.textContent=`Signed Documents (${count})`;actions.appendChild(b);}
+    }
+    return d.innerHTML;
+  };
+
+  // -----------------------------------------------------------------------
+  // B. Faithful A4-style quotation renderer used by customer E-sign and signed copy.
+  // Reads document defaults from revision_snapshot (the immutable sent revision).
+  // -----------------------------------------------------------------------
+  function v17UpgradeMedia(name,seen){
+    const k=v17Norm(name);let src='',alt='';
+    if(k===v17Norm(V17_EXCEL)){src='assets/excel-mola-fermi-upgrade.png';alt='EXCEL Mola Fermi free upgrade';}
+    if(k===v17Norm(V17_NIPPON)){src='assets/nippon-anti-mould-upgrade.png';alt='Nippon Paint Anti Mould free upgrade';}
+    if(!src||seen.has(src))return '';seen.add(src);return `<div class="v17UpgradeMedia"><img src="${src}" alt="${esc(alt)}"></div>`;
+  }
+  function v17Scope(items){
+    const sections={},seen=new Set();
+    (items||[]).forEach((it,n)=>{
+      const section=it.work_section||'General Works',area=it.area_location||'Unassigned Area',pricing=String(it.pricing_type||'Amount'),gid=v17GroupId(pricing,'Included:')||v17GroupId(pricing,'Lump Sum:');
+      sections[section]=sections[section]||{};sections[section][area]=sections[section][area]||{normal:[],groups:{},charges:{}};const g=sections[section][area];
+      if(pricing.startsWith('Lump Sum:')){if(gid)g.charges[gid]=it;}
+      else if(gid){g.groups[gid]=g.groups[gid]||[];g.groups[gid].push(it);}
+      else g.normal.push(it);
+    });
+    const out=[];
+    Object.entries(sections).forEach(([section,areas])=>{
+      out.push(`<div class="v17PrintSection">${esc(section)}</div>`);
+      Object.entries(areas).forEach(([area,g])=>{
+        const standard=section==='Professional Services'&&area==='Professional Services';
+        if(!standard)out.push(`<div class="v17PrintArea">${esc(area)}</div>`);
+        const rows=[];
+        g.normal.forEach(it=>{
+          const p=String(it.pricing_type||'Amount'),amt=p==='Amount'?v17Money(it.charge_amount):esc(p||'Inclusive');
+          rows.push(`<tr><td><b>${esc(it.item_name||'')}</b>${it.description?`<div class="v17ItemDesc">${v17Lines(it.description)}</div>`:''}${standard?'':`<span class="v17Qty">${Number(it.qty||0)} ${esc(it.unit||'')}</span>`}${v17UpgradeMedia(it.item_name,seen)}</td><td>${amt}</td></tr>`);
+        });
+        Object.entries(g.groups).forEach(([gid,members])=>{const ch=g.charges[gid],label=ch?.item_name||`${area} Package`,amount=Number(ch?.charge_amount||0);rows.push(`<tr><td><b>${esc(label)}</b><div class="v17CombinedPrint">${members.map(it=>`<div class="v17CombinedPrintItem">• <b>${esc(it.item_name||'')}</b>${it.description?`<span>${v17Lines(it.description)}</span>`:''}${v17UpgradeMedia(it.item_name,seen)}</div>`).join('')}</div></td><td><b>${v17Money(amount)}</b></td></tr>`);});
+        if(rows.length)out.push(`<table class="v17ScopeTable"><tr><th>Scope of Works</th><th>Amount</th></tr>${rows.join('')}</table>`);
+      });
+    });
+    return out.join('');
+  }
+  function v17StaffSigns(map){const vals=Object.values(map||{});return vals.length?vals.map(s=>`<div class="v17PersonSign">${s?.data?`<img src="${s.data}" alt="${esc(s.name||'Staff')} signature">`:'<div class="v17SignLine"></div>'}<b>${esc(s?.name||'Interior Designer / ID')}</b><span>Interior Designer / ID</span>${s?.date?`<small>${esc(new Date(s.date).toLocaleDateString())}</small>`:''}</div>`).join(''):'<div class="v17PersonSign"><div class="v17SignLine"></div><b>Interior Designer / ID</b><span>Company Signature</span></div>';}
+  function v17ClientSign(customer,signed){
+    if(signed?.signature_data)return `<div class="v17PersonSign"><img src="${signed.signature_data}" alt="Customer signature"><b>${esc(signed.signed_by||customer.name||'Customer')}</b><span>Client / Contract Approval</span>${signed.signed_at?`<small>${esc(new Date(signed.signed_at).toLocaleString())}</small>`:''}</div>`;
+    return `<div class="v17PersonSign"><div class="v17SignLine"></div><b>${esc(customer.name||'Client')}</b><span>Client / Contract Approval</span></div>`;
+  }
+  function v17QuoteDocument(s,signed=null){
+    const c=s.company||{},customer=s.customer||{},cs=s.case||{},rs=s.revision_snapshot||{},docs=rs.company_docs||{},pay=rs.payment_schedule||[],staff=rs.staff_signatures||{},logo=v11LogoFromSnapshot(c),served=Object.values(staff).map(x=>x?.name).filter(Boolean).join(', ')||'-',intro=docs.quoteIntro||`Thank you for engaging ${c.name||'our company'} as your interior design firm to carry out the renovation work at the above address. We are pleased to enclose herewith our final contract sum and work details for your endorsement:`,terms=docs.terms||'',date=rs.date_sent||s.date_sent||'';
+    const signatures=`<div class="v17PageSigns"><div class="v17IdSigns">${v17StaffSigns(staff)}</div>${v17ClientSign(customer,signed)}</div>`;
+    return `<div class="v17QuoteDocument"><div class="v17DocHeader"><img src="${esc(logo)}"><div><b>${esc(c.name||'Brick & Decor')}</b><br>Co. Reg: ${esc(c.uen||'')}<br>Tel: ${esc(c.phone||'')}<br><br><b>Showroom Address :</b><br>${esc(c.address||'')}</div></div><table class="v17Info"><tr><td>Name</td><td>${esc(customer.name||'')}</td><td>Quotation No</td><td>${esc(s.quotation_no||'')}</td></tr><tr><td>NRIC</td><td>${esc(customer.nric_uen||'-')}</td><td>Date</td><td>${esc(date||'')}</td></tr><tr><td>Address</td><td>${esc([cs.site_address,cs.postal_code].filter(Boolean).join(' '))}</td><td>Served By</td><td>${esc(served)}</td></tr><tr><td>H/P</td><td>${esc(customer.phone||'-')}</td><td>Revision</td><td>${esc(s.revision_label||'')}</td></tr><tr><td>Fax/Email</td><td>${esc(customer.email||'-')}</td><td>Page/s</td><td>Auto</td></tr></table><div class="v17QuoteTitle">QUOTATION FOR THE INTERIOR DESIGN WORKS</div><div class="v17QuoteIntro">${esc(intro)}</div>${v17Scope(s.items||[])}<table class="v17Totals"><tr><td>Subtotal</td><td>${v17Money(s.subtotal)}</td></tr><tr><td>Discount</td><td>(${v17Money(s.discount_amount)})</td></tr><tr><td>GST ${Number(s.gst_rate||0)}%</td><td>${v17Money(s.gst_amount)}</td></tr><tr><td>Grand Total</td><td><b>${v17Money(s.total)}</b></td></tr></table>${pay.length?`<h3 class="v17PayTitle">Payment Schedule</h3><table class="v17Payment">${pay.map(x=>`<tr><td>${Number(x.pct||0)}%</td><td>${esc(x.label||'')}</td><td>${v17Money(x.amount||0)}</td></tr>`).join('')}</table>`:''}${signatures}<section class="v17Terms"><h2>Terms &amp; Conditions</h2><div class="v17TermsText">${v17Lines(terms)}</div><div class="v17TermsSigns"><div><h4>For / On behalf of ${esc(c.name||'Company')}</h4><div class="v17IdSigns">${v17StaffSigns(staff)}</div></div><div><h4>Confirmed & Agreed By Client</h4>${v17ClientSign(customer,signed)}</div></div></section></div>`;
+  }
+
+  // Customer E-sign now shows the same sent quotation structure instead of a simplified snapshot UI.
+  v11RenderClientSign=async function(token){
+    document.body.innerHTML='<div class="v11Loading"><div><span class="v11Spinner"></span>Loading secure quotation…</div></div>';
+    try{
+      const r=await v11Rpc('get_esign_request',{p_token:token},false);if(!r?.ok)throw new Error(r?.status==='NOT_FOUND'?'This signing link was not found.':'This signing link is invalid.');const s=r.snapshot||{};
+      if(r.status!=='PENDING'){
+        document.body.innerHTML=`<div class="v17PublicShell"><div class="v17SignedMessage"><h2>${r.status==='SIGNED'?'Quotation already signed':'Signing link unavailable'}</h2><div class="${r.status==='SIGNED'?'goodbox':'dangerbox'}">${r.status==='SIGNED'?`Signed by <b>${esc(r.signed_by||'customer')}</b> on ${esc(new Date(r.signed_at).toLocaleString())}.`:`This link is ${esc(String(r.status||'').toLowerCase())}.`}</div></div></div>`;return;
+      }
+      document.body.innerHTML=`<div id="v10ClientPage" class="v17PublicShell"><div class="v17PublicToolbar"><span><b>Secure B&D E-sign</b> · ${esc(s.quotation_no||'')} ${esc(s.revision_label||'')}</span><span>Expires ${esc(new Date(r.expires_at).toLocaleString())}</span></div><div class="v17PublicPaper">${v17QuoteDocument(s)}</div><div class="v17PublicSignPanel"><h2>Customer E-signature</h2><p>Please review the complete quotation and Terms & Conditions above before signing.</p><label>Full Name</label><input id="v10_sign_name" type="text" value="${esc(s.customer?.name||'')}" placeholder="Customer full name"><canvas id="v10_sign_canvas" width="900" height="260"></canvas><div class="v10SignActions"><button onclick="v10ClearSignature()">Clear Signature</button></div><label class="v10Accept"><input id="v10_sign_accept" type="checkbox"> I confirm that I have reviewed and approve this quotation and its Terms & Conditions.</label><button id="v11_submit_sign" class="v10SubmitSign" onclick="v11SubmitEsign('${esc(token)}')">Sign & Confirm Approval</button><div class="small v10ClientFoot">Your signature, signer name and approval timestamp will be securely recorded against this exact sent revision.</div></div></div>`;
+      v10SignatureDirty=false;setTimeout(v10InitSignaturePad,0);
+    }catch(e){document.body.innerHTML=`<div class="v17PublicShell"><div class="v17SignedMessage"><h2>Unable to open quotation</h2><div class="dangerbox">${esc(e.message||'The signing link could not be loaded.')}</div></div></div>`;}
+  };
+
+  // -----------------------------------------------------------------------
+  // C. Staff signed-copy preview / print. SQL 06 exposes signature evidence only
+  // to authenticated staff who already have access to the case/company.
+  // -----------------------------------------------------------------------
+  window.v17OpenSignedQuotation=async function(qid){
+    const q=S.quotes.find(x=>x.id===qid);if(!q?.esign?.requestId)return toast('No E-sign request found for this quotation');
+    modal(`<h2>Loading Signed Quotation</h2><div class="goodbox"><span class="v11Spinner"></span>Retrieving the immutable sent revision and signature evidence…</div>`);
+    try{
+      const r=await v11Rpc('get_my_esign_request_v17',{p_request_id:q.esign.requestId},true);if(!r?.ok)throw new Error('Signed quotation record not found');
+      const signed=r.status==='SIGNED'?r:null,html=v17QuoteDocument(r.snapshot||{},signed);window.V17_SIGNED_PRINT_HTML=html;window.V17_SIGNED_PRINT_TITLE=`${qid} Signed Copy`;
+      modal(`<div class="v17SignedStatus ${r.status==='SIGNED'?'done':'pending'}"><b>${r.status==='SIGNED'?'Fully Signed':'Signature Status: '+esc(r.status)}</b>${r.signed_by?` · Customer: ${esc(r.signed_by)}`:''}${r.signed_at?` · ${esc(new Date(r.signed_at).toLocaleString())}`:''}</div><div class="previewPaper v17SignedPreview">${html}</div><div class="v14PreviewActions"><button class="btn" onclick="closeModal()">Close</button><button class="btn p" onclick="printDoc(V17_SIGNED_PRINT_TITLE,V17_SIGNED_PRINT_HTML)">Print / Save Signed PDF</button></div>`);
+    }catch(e){modal(`<h2>Unable to Load Signed Copy</h2><div class="dangerbox">${esc(e.message||'Unknown error')}</div><p class="small">Run <b>06_v0.17_signed_copy.sql</b> once in Supabase, then retry.</p><button class="btn" onclick="closeModal()">Close</button>`);}
+  };
+
+  function v17SignedPersonHtml(r){return `<div class="v17PersonSign">${r.signature_data?`<img src="${r.signature_data}" alt="Customer signature">`:'<div class="v17SignLine"></div>'}<b>${esc(r.signed_by||'Customer')}</b><span>Client / Contract Approval</span>${r.signed_at?`<small>${esc(new Date(r.signed_at).toLocaleString())}</small>`:''}</div>`;}
+  function v17ApplyDocumentSignature(html,r){
+    const d=document.createElement('div');d.innerHTML=html||'';const signed=v17SignedPersonHtml(r);
+    d.querySelectorAll('.v14PageSignatures > .v14PersonSign:last-child,.v17PageSigns > .v17PersonSign:last-child').forEach(el=>el.outerHTML=signed);
+    d.querySelectorAll('.v14TermsSignatures > div:last-child .v14PersonSign,.v17TermsSigns > div:last-child .v17PersonSign').forEach(el=>el.outerHTML=signed);
+    if(!d.querySelector('.v14TermsSignatures,.v17TermsSigns'))d.insertAdjacentHTML('beforeend',`<div class="v17TermsSigns"><div></div><div><h4>Confirmed & Agreed By Client</h4>${signed}</div></div>`);
+    return d.innerHTML;
+  }
+  window.v17OpenSignedDocument=async function(id){
+    modal(`<h2>Loading Signed Document</h2><div class="goodbox"><span class="v11Spinner"></span>Retrieving signature evidence…</div>`);
+    try{const r=await v11Rpc('get_my_document_esign_request_v17',{p_request_id:id},true);if(!r?.ok)throw new Error('Signed document record not found');const html=v17ApplyDocumentSignature(r.snapshot?.html||'',r);window.V17_SIGNED_PRINT_HTML=html;window.V17_SIGNED_PRINT_TITLE=`${r.document_no||'Document'} Signed Copy`;modal(`<div class="v17SignedStatus ${r.status==='SIGNED'?'done':'pending'}"><b>${esc(r.document_type||'Document')} · ${esc(r.document_no||'')}</b> · ${esc(r.status||'')}${r.signed_by?` · Customer: ${esc(r.signed_by)}`:''}</div><div class="previewPaper v17SignedPreview">${html}</div><div class="v14PreviewActions"><button class="btn" onclick="closeModal()">Close</button><button class="btn p" onclick="printDoc(V17_SIGNED_PRINT_TITLE,V17_SIGNED_PRINT_HTML)">Print / Save Signed PDF</button></div>`);}catch(e){modal(`<h2>Unable to Load Signed Document</h2><div class="dangerbox">${esc(e.message||'Unknown error')}</div><p class="small">Run <b>06_v0.17_signed_copy.sql</b> once in Supabase, then retry.</p><button class="btn" onclick="closeModal()">Close</button>`);}
+  };
+  window.v17SignedDocumentsForCase=function(pid,qid){
+    const nos=new Set([`${qid}-LOA`,...(S.vos||[]).filter(v=>v.p===pid).map(v=>v.id),...(S.dos||[]).filter(v=>v.p===pid).map(v=>v.id)]),rows=(S.documentEsign||[]).filter(x=>nos.has(x.no)&&x.status==='SIGNED');
+    modal(`<h2>Signed Documents</h2><p class="small">Customer-signed LOA / VO / Handover documents linked to this case.</p><div class="compactList">${rows.map(x=>`<div class="compactItem"><div class="compactMain"><b>${esc(x.type||'Document')} · ${esc(x.no||'')}</b><div class="compactMeta">Signed by ${esc(x.signedBy||'Customer')} ${x.signedAt?'· '+esc(new Date(x.signedAt).toLocaleString()):''}</div></div><button class="btn s" onclick="v17OpenSignedDocument('${x.id}')">Preview Signed Copy</button></div>`).join('')||'<div class="small">No signed documents found yet.</div>'}</div>`);
+  };
+
+  // -----------------------------------------------------------------------
+  // D. Version / styles.
+  // -----------------------------------------------------------------------
+  const v17BaseLayout=layout;layout=function(){v17BaseLayout();const n=document.querySelector('.side .note');if(n)n.innerHTML='<b>v0.17 Signed Copy + E-sign Layout</b><br>Builder descriptions preserve entered line breaks, customer E-sign mirrors the sent quotation layout, and authorised staff can preview/print signed copies with actual signatures.';};
+  const css=document.createElement('style');css.textContent=`
+    .v17PreWrap,.v17CombinedDesc{white-space:pre-wrap}.v17CombinedItem{margin:5px 0}.v17CombinedDesc{margin:3px 0 0 18px;color:#667085;font-weight:400;line-height:1.45}.v17PublicShell{min-height:100vh;background:#EEECE7;padding:18px;font-family:Arial,sans-serif;color:#111}.v17PublicToolbar{position:sticky;top:0;z-index:10;max-width:820px;margin:0 auto 10px;background:#17202A;color:#fff;padding:10px 14px;border-radius:10px;display:flex;justify-content:space-between;gap:12px;font-size:12px}.v17PublicPaper{width:min(794px,100%);margin:auto;background:#fff;padding:26px 28px;border:1px solid #D8D8D8;box-shadow:0 12px 32px rgba(0,0,0,.12)}.v17PublicSignPanel{width:min(794px,100%);margin:14px auto;background:#fff;padding:20px 24px;border:1px solid #D8D8D8;border-radius:12px}.v17PublicSignPanel label{display:block;font-weight:700;font-size:12px;margin:8px 0 5px}.v17PublicSignPanel input[type=text]{width:100%;padding:10px;border:1px solid #bbb;border-radius:8px}.v17PublicSignPanel canvas{width:100%;height:190px;border:1px dashed #999;border-radius:8px;background:#fff;touch-action:none}.v17SignedMessage{max-width:760px;margin:80px auto;background:#fff;padding:24px;border-radius:14px}.v17QuoteDocument{font-size:10px}.v17DocHeader{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:8px}.v17DocHeader img{width:185px;max-height:95px;object-fit:contain}.v17DocHeader>div{text-align:right;font-size:8px;line-height:1.4}.v17Info{width:100%;border-collapse:collapse;margin:5px 0}.v17Info td{border:1px solid #555;padding:3px 5px;font-size:8px}.v17Info td:nth-child(1),.v17Info td:nth-child(3){font-weight:700;width:13%}.v17QuoteTitle{text-align:center;text-decoration:underline;font-weight:900;font-size:12px;margin:4px 0}.v17QuoteIntro{text-align:center;font-size:8px;line-height:1.35;margin:0 7% 6px}.v17PrintSection{font-weight:900;font-size:11px;border-top:1px solid #333;padding:5px 4px 3px;margin-top:5px}.v17PrintArea{font-weight:800;background:#eee;padding:4px 5px;border:1px solid #aaa;border-bottom:0}.v17ScopeTable{width:100%;border-collapse:collapse;margin-bottom:5px}.v17ScopeTable th,.v17ScopeTable td{border:1px solid #aaa;padding:4px 5px;vertical-align:top;font-size:8px}.v17ScopeTable th:last-child,.v17ScopeTable td:last-child{width:110px;text-align:right}.v17ItemDesc,.v17CombinedPrintItem span{font-size:7.5px;color:#444;line-height:1.4;margin-top:2px}.v17Qty{display:block;font-size:7px;color:#666;margin-top:2px}.v17CombinedPrint{margin-top:3px}.v17CombinedPrintItem{margin:4px 0}.v17CombinedPrintItem span{display:block;margin-left:10px}.v17UpgradeMedia img{max-width:245px;max-height:120px;object-fit:contain;margin-top:5px}.v17Totals{width:310px;margin:5px 0 4px auto;border-collapse:collapse}.v17Totals td{padding:3px 5px;border-bottom:1px solid #ccc}.v17Totals td:first-child{text-align:right;font-weight:700}.v17Totals td:last-child{text-align:right}.v17PayTitle{font-size:10px;margin:6px 0 2px}.v17Payment{width:100%;border-collapse:collapse}.v17Payment td{border:1px solid #ccc;padding:3px 5px;font-size:8px}.v17PageSigns,.v17TermsSigns{display:grid;grid-template-columns:1.3fr 1fr;gap:35px;margin-top:24px}.v17IdSigns{display:flex;gap:15px;flex-wrap:wrap}.v17PersonSign{min-width:150px;line-height:1.3}.v17PersonSign img{display:block;width:135px;height:46px;object-fit:contain;object-position:left bottom}.v17SignLine{height:46px;border-bottom:1px solid #222;width:145px}.v17PersonSign b,.v17PersonSign span,.v17PersonSign small{display:block;font-size:7.5px}.v17Terms{margin-top:30px;padding-top:10px;border-top:2px solid #222}.v17Terms h2{text-align:center;font-size:14px}.v17TermsText{font-size:8px;line-height:1.4}.v17SignedStatus{padding:10px 12px;border-radius:10px;margin-bottom:10px}.v17SignedStatus.done{background:#ECFDF3;border:1px solid #B7EBC6;color:#166534}.v17SignedStatus.pending{background:#FFF8E7;border:1px solid #EBD8A5;color:#765A18}.v17SignedPreview .v17QuoteDocument{max-width:794px;margin:auto}
+    @media(max-width:700px){.v17PublicShell{padding:8px}.v17PublicPaper,.v17PublicSignPanel{padding:14px}.v17PublicToolbar{display:block}.v17DocHeader{display:block}.v17DocHeader>div{text-align:left;margin-top:6px}.v17PageSigns,.v17TermsSigns{grid-template-columns:1fr}.v17ScopeTable th:last-child,.v17ScopeTable td:last-child{width:90px}}
+    @media print{.v17PublicToolbar,.v17PublicSignPanel{display:none!important}.v17PublicShell{background:#fff;padding:0}.v17PublicPaper{box-shadow:none;border:0;padding:0;width:auto}.v17Terms{break-before:page;page-break-before:always}.v17ScopeTable tr,.v17UpgradeMedia,.v17TermsSigns{break-inside:avoid;page-break-inside:avoid}}
+  `;document.head.appendChild(css);document.title='Brick & Decor PWA v0.17 Signed Copy + E-sign Layout';
+})();
+
 </script><script>if($('modal'))$('modal').onclick=e=>{if(e.target.id=='modal')closeModal()};
 Promise.resolve().then(()=>v11Boot()).catch(e=>{console.error('B&D startup failed',e);document.body.innerHTML=`<div class="v11Loading"><div><h2>Unable to start B&D</h2><p>${String(e?.message||e||'Unknown startup error')}</p><button class="btn p" onclick="location.reload()">Retry</button></div></div>`;});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('Service worker registration failed',e));
