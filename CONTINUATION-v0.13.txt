@@ -1,0 +1,47 @@
+BRICK & DECOR PWA — CONTINUATION AFTER v0.13
+
+Latest source build:
+v0.13 Hierarchical Quotation + Company Documents
+
+Base:
+Full v0.12 Supabase / multi-ID / commission / flexible billing / supplier Work Section costing build.
+
+v0.13 quotation structure:
+Work Section -> Area / Location -> many Item / Service rows.
+Item/service internal wording = customer wording. Removed Item Source, Client-facing Item Name and Internal Category from active Add Scope UI.
+
+Pricing:
+- Individual per item.
+- Lump Sum group: many visible items -> one customer-facing amount.
+- Internal approximate cost stays per real item.
+- Multiple lump groups may exist in same Area.
+
+Master source:
+PWA List.xlsx supplied by user:
+- Quotation Haeder
+- Area or Location
+- Work Section Library
+- Item or Client facing item
+- Remarks
+v0.13 embeds 12 areas, 20 work sections and 69 parsed item/service blocks.
+
+Company documents:
+User supplied four company ZIPs containing Contract, Appointment Letter and Handover forms for Central, BD Werks, North and Arc & Brush.
+Layout may be standardized but generated content/company identity follows Case company.
+Current Company Master remains authoritative for current company particulars.
+Reference document wording/structure comes from supplied PDFs.
+
+Company-specific payment wording:
+Central/North Stage 2 = commencement of work.
+BD Werks/Arc & Brush Stage 2 = application of renovation permit / ordering of material.
+
+Supabase:
+No new v0.13 SQL migration. Keep v0.12 backend migration already installed.
+Lump group identity is encoded in existing quotation pricing_type for cross-device E-sign reconstruction.
+
+Tests:
+- 7 JS blocks syntax PASS.
+- 21/21 static feature assertions PASS.
+- mocked individual + lump-sum totals/grouping PASS.
+- SW cached assets exist.
+- live GitHub Pages visual smoke test still required after deployment.
