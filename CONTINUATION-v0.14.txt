@@ -1,0 +1,48 @@
+PROJECT CONTINUATION — BRICK & DECOR PWA v0.14
+
+LATEST BUILD
+Brick & Decor PWA v0.14 L1.5 Quotation + Signing
+Built on full v0.13, preserving v0.12 Supabase/multi-ID/costing features.
+
+NEW V0.14 REQUIREMENTS IMPLEMENTED
+- Larger/aligned Add Quotation Scope modal.
+- Work Section -> Area / Location -> multiple Item / Service rows.
+- Individual Amount or Combined Amount pricing.
+- Never show `Lump Sum` wording in customer-facing quotation output.
+- Fixed Professional Services section auto-added to every quotation unless ID removes it.
+- Quotation pages use sample-style company/header/customer-information area.
+- Normal quotation print pages use repeating header + signature footer.
+- Terms & Conditions starts on a new page with its own left/right signatures.
+- ID/staff can save personal document signature.
+- Quotation customer E-sign requires an assigned ID signature first.
+- LOA / VO / Handover support staff signature + secure customer E-sign after SQL migration.
+- EXCEL free-upgrade item auto-inserts supplied EXCEL image once.
+- NIPPON PAINT Anti Mould Kitchen & Bathrooms Ceiling free-upgrade item auto-inserts supplied bathroom/Nippon image once.
+- Company selected on Case remains authoritative for generated-document company identity/content.
+
+NEW SUPABASE MIGRATION
+04_v0.14_document_esign.sql
+Run once after existing foundation + v0.12 migration.
+Creates `document_esign_requests` and secure RPCs:
+- create_document_esign_request
+- get_document_esign_request
+- submit_document_esign
+- list_my_document_esign_requests
+
+IMPORTANT
+Existing quotation E-sign uses the already installed quotation E-sign backend and remains separate.
+Do not disable RLS.
+Do not expose service-role key in frontend.
+
+TEST STATUS
+- 8/8 inline JS syntax checks PASS.
+- 19/19 static v0.14 feature/security checks PASS.
+- Mock quotation output assertions PASS, including both automatic upgrade images, no customer-facing Lump Sum wording, separate T&C and signatures.
+- Service worker precache files all exist.
+- Final browser print pagination and live Supabase RPCs still need post-deployment smoke test.
+
+NEXT SAFE STEP
+1. Run `04_v0.14_document_esign.sql` once in Supabase SQL Editor.
+2. Deploy full ZIP contents to repo root.
+3. Test `?v=0141`.
+4. Smoke-test quotation modal/layout, Combined Amount, both upgrade images, print pagination/signatures, quotation E-sign, then LOA/VO/Handover E-sign.
