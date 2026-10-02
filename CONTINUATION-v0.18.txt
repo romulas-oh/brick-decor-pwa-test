@@ -1,0 +1,9 @@
+Brick & Decor PWA v0.18 handoff
+- Base: v0.17 Signed Copy + E-sign Layout.
+- New: secure Superadmin-only real Supabase Auth staff administration.
+- SQL: 07_v0.18_user_admin.sql.
+- Edge Function: supabase/functions/user-admin/index.ts.
+- Frontend Users & Access now lists real backend profiles and supports create/edit/deactivate/reactivate/password-reset/permanent-delete safeguards.
+- Non-Superadmin login now loads real profile permissions + company access.
+- Permanent deletion is intentionally blocked when historical DB references exist; use Deactivate for former staff.
+- Existing quotation/E-sign/signed-copy features remain.

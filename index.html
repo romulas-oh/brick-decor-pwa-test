@@ -2671,7 +2671,194 @@ async function v11Boot(){
   `;document.head.appendChild(css);document.title='Brick & Decor PWA v0.17 Signed Copy + E-sign Layout';
 })();
 
-</script><script>if($('modal'))$('modal').onclick=e=>{if(e.target.id=='modal')closeModal()};
+</script><script>
+/* Brick & Decor PWA v0.18 — secure Superadmin staff account management */
+(function(){
+  const V18_ROLES=['Superadmin','Admin','Senior ID / Salesperson','ID / Salesperson','Project Manager','Accounts','Viewer'];
+  const V18_SALES_ROLES=new Set(['Senior ID / Salesperson','ID / Salesperson']);
+  let V18_STAFF=[];
+  let V18_AUDIT=[];
+  let V18_LOADING=false;
+  let V18_LOADED=false;
+  let V18_ERROR='';
+  let V18_GUARD_TIMER=null;
+
+  const v18CompanyCode=id=>Object.entries(V11_COMPANY_IDS).find(([,v])=>v===id)?.[0]||'';
+  const v18CompanyName=id=>{const code=v18CompanyCode(id);return code?co(code).name:id};
+  const v18IsSelf=id=>id===V11_SESSION?.user?.id;
+  const v18PermArray=p=>Array.isArray(p)?p:(p&&typeof p==='object'?Object.keys(p).filter(k=>p[k]):[]);
+  const v18DefaultCommission=role=>role==='Senior ID / Salesperson'?50:role==='ID / Salesperson'?40:0;
+  const v18DefaultPerms=role=>{
+    if(role==='Superadmin')return PERMS.slice();
+    if(role==='Admin')return ['Create Case','View Own Open Cases','View Closed Cases','View All Projects','Create Quotation','Edit Quotation','View Actual Cost','Edit Actual Cost','Approve Supplier Invoice','Override Supplier Approval','Make Supplier Payment','Submit Case Closure','View All Commission','Manage Master Data'];
+    if(role==='Senior ID / Salesperson'||role==='ID / Salesperson')return ['Create Case','View Own Open Cases','Create Quotation','Edit Quotation','View Own Approved Commission'];
+    if(role==='Project Manager')return ['View Own Open Cases','View Actual Cost','Edit Actual Cost','Approve Supplier Invoice'];
+    if(role==='Accounts')return ['View All Projects','View Actual Cost','Approve Supplier Invoice','Make Supplier Payment'];
+    if(role==='Viewer')return ['View Own Open Cases'];
+    return [];
+  };
+
+  async function v18AdminApi(action,payload={}){
+    return v11Api('/functions/v1/user-admin',{method:'POST',body:{action,...payload},auth:true});
+  }
+
+  function v18SyncRuntimeUsers(rows){
+    (rows||[]).forEach(r=>{
+      const id='SB-'+r.id;
+      const existing=S.users.find(u=>u.id===id);
+      const companyCodes=(r.company_ids||[]).map(v18CompanyCode).filter(Boolean);
+      const perms=r.role==='Superadmin'?PERMS.slice():v18PermArray(r.permissions);
+      const rec={
+        id,
+        authId:r.id,
+        backend:true,
+        name:r.name||r.email||'Staff',
+        role:r.role||'Viewer',
+        email:r.email||'',
+        co:r.role==='Superadmin'?['ALL']:companyCodes,
+        vis:r.role==='Superadmin'||perms.includes('View All Projects')?'All Projects':'Own Assigned Open Only',
+        closed:!!r.can_view_closed_cases,
+        commAll:r.role==='Superadmin'||perms.includes('View All Commission'),
+        perms,
+        commissionDefaultPct:Number(r.commission_default_pct||0),
+        active:r.active!==false,
+      };
+      if(existing)Object.assign(existing,rec);else S.users.push(rec);
+    });
+    save();
+  }
+
+  // Real profile/company access is loaded at login so non-Superadmins receive the
+  // correct runtime company access and permissions instead of the old role-only demo defaults.
+  v11LoadProfile=async function(){
+    const uid=V11_SESSION?.user?.id;if(!uid)throw new Error('Authenticated user ID is missing.');
+    const rows=await v11RestSelect('profiles',`select=id,email,name,role,permissions,active,can_view_closed_cases,commission_default_pct&id=eq.${encodeURIComponent(uid)}&limit=1`);
+    if(!rows?.length)throw new Error('Staff profile is not ready. Refresh once and try again.');
+    const access=await v11RestSelect('user_company_access',`select=company_id&user_id=eq.${encodeURIComponent(uid)}`);
+    V11_PROFILE={...rows[0],company_ids:(access||[]).map(x=>x.company_id)};
+    return V11_PROFILE;
+  };
+
+  v11InstallRuntimeUser=function(){
+    if(!V11_PROFILE)return;
+    const id='SB-'+V11_PROFILE.id,existing=S.users.find(u=>u.id===id);
+    const perms=V11_PROFILE.role==='Superadmin'?PERMS.slice():v18PermArray(V11_PROFILE.permissions);
+    const codes=(V11_PROFILE.company_ids||[]).map(v18CompanyCode).filter(Boolean);
+    const u={id,authId:V11_PROFILE.id,backend:true,name:V11_PROFILE.name||V11_PROFILE.email||'Staff',role:V11_PROFILE.role,email:V11_PROFILE.email||'',co:V11_PROFILE.role==='Superadmin'?['ALL']:codes,vis:V11_PROFILE.role==='Superadmin'||perms.includes('View All Projects')?'All Projects':'Own Assigned Open Only',closed:!!V11_PROFILE.can_view_closed_cases,commAll:V11_PROFILE.role==='Superadmin'||perms.includes('View All Commission'),perms,commissionDefaultPct:Number(V11_PROFILE.commission_default_pct||0),active:V11_PROFILE.active!==false};
+    if(existing)Object.assign(existing,u);else S.users.push(u);S.currentUser=id;save();
+  };
+
+  async function v18LoadUsers(force=false){
+    if(V11_PROFILE?.role!=='Superadmin')return;
+    if(V18_LOADING)return;
+    if(V18_LOADED&&!force)return;
+    V18_LOADING=true;V18_ERROR='';
+    try{
+      const r=await v18AdminApi('list');
+      V18_STAFF=r.users||[];
+      V18_AUDIT=await v11RestSelect('user_admin_audit','select=id,actor_email,target_email,action,detail,created_at&order=created_at.desc&limit=40').catch(()=>[]);
+      V18_LOADED=true;v18SyncRuntimeUsers(V18_STAFF);
+    }catch(e){V18_ERROR=e.message||String(e);}
+    finally{V18_LOADING=false;if(active==='users')show('users');}
+  }
+  window.v18LoadUsers=v18LoadUsers;
+
+  function v18CompanyChecks(selected=[]){
+    return S.companies.map(c=>`<label class="v18Choice"><input class="v18_company" type="checkbox" value="${esc(V11_COMPANY_IDS[c.id]||'')}" ${selected.includes(V11_COMPANY_IDS[c.id])?'checked':''}><span><b>${esc(c.name)}</b><small>${esc(c.uen)}</small></span></label>`).join('');
+  }
+  function v18PermissionChecks(selected=[]){
+    return PERMS.filter(p=>p!=='Manage Users').map(p=>`<label class="v18Perm"><input class="v18_perm" type="checkbox" value="${esc(p)}" ${selected.includes(p)?'checked':''}> ${esc(p)}</label>`).join('');
+  }
+
+  window.v18RoleChanged=function(forceDefaults=true){
+    const role=$('v18_role')?.value||'Viewer';
+    const sales=V18_SALES_ROLES.has(role),superadmin=role==='Superadmin';
+    const comm=$('v18_commission');if(comm){comm.disabled=!sales;if(forceDefaults)comm.value=String(v18DefaultCommission(role));}
+    document.querySelectorAll('.v18_company').forEach(x=>{x.disabled=superadmin;if(superadmin)x.checked=true;});
+    document.querySelectorAll('.v18_perm').forEach(x=>{x.disabled=superadmin;if(forceDefaults)x.checked=superadmin||v18DefaultPerms(role).includes(x.value);});
+    const closed=$('v18_closed');if(closed){closed.disabled=superadmin;if(superadmin)closed.checked=true;}
+  };
+  window.v18ModeChanged=function(){const showPass=$('v18_mode')?.value==='temporary_password';const wrap=$('v18_password_wrap');if(wrap)wrap.style.display=showPass?'block':'none';};
+
+  window.v18OpenUser=function(id=''){
+    if(V11_PROFILE?.role!=='Superadmin')return toast('Superadmin access required');
+    const u=id?V18_STAFF.find(x=>x.id===id):null;
+    const role=u?.role||'ID / Salesperson',perms=u?v18PermArray(u.permissions):v18DefaultPerms(role),companies=u?.company_ids||[],isSelf=!!u&&v18IsSelf(u.id);
+    modal(`<div class="v18UserModal"><h2>${u?'Edit Staff Account':'Create Staff Account'}</h2><p class="small">${u?'Update this real Supabase staff profile and access.':'Creates a real Supabase Auth login and staff profile. Only Superadmin can perform this action.'}</p><div class="form">${field('v18_name','Name',u?.name||'')}${u?`<div class="field"><label>Email</label><input value="${esc(u.email||'')}" disabled><small>Email change is kept separate from access editing.</small></div>`:field('v18_email','Email','', 'email')}${field('v18_role','Role',role,'select',V18_ROLES.join('|'))}<div class="field"><label>Default Commission %</label><input id="v18_commission" type="number" min="0" max="100" step="0.5" value="${Number(u?.commission_default_pct??v18DefaultCommission(role))}"></div><div class="field full"><label class="check"><input id="v18_closed" type="checkbox" ${u?.can_view_closed_cases||role==='Superadmin'?'checked':''}> Can view closed cases/projects</label></div>${!u?`<div class="field"><label>Account Setup</label><select id="v18_mode" onchange="v18ModeChanged()"><option value="invite">Send invitation email (recommended)</option><option value="temporary_password">Create with temporary password</option></select></div><div class="field" id="v18_password_wrap" style="display:none"><label>Temporary Password</label><input id="v18_password" type="password" minlength="10" autocomplete="new-password" placeholder="At least 10 characters"></div>`:''}<div class="field full"><label>Company Access</label><div class="v18ChoiceGrid">${v18CompanyChecks(companies)}</div></div><div class="field full"><label>Permissions</label><div class="v18PermGrid">${v18PermissionChecks(perms)}</div><p class="small">User administration itself is always restricted to Superadmin, even if another role has old local permissions.</p></div></div>${isSelf?'<div class="warnbox">You may update your own name/access settings, but the backend will not allow you to demote, deactivate or delete your own Superadmin account.</div>':''}<div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button id="v18_save_user" class="btn p" onclick="v18SaveUser('${esc(id)}')">${u?'Save Changes':'Create Account'}</button></div></div>`);
+    const roleEl=$('v18_role');if(roleEl){roleEl.onchange=()=>v18RoleChanged(true);}setTimeout(()=>v18RoleChanged(false),0);
+  };
+
+  window.v18SaveUser=async function(id=''){
+    const btn=$('v18_save_user');try{
+      const name=$('v18_name')?.value.trim(),role=$('v18_role')?.value||'Viewer',company_ids=[...document.querySelectorAll('.v18_company:checked')].map(x=>x.value).filter(Boolean),permissions=[...document.querySelectorAll('.v18_perm:checked')].map(x=>x.value),commission_default_pct=+$('v18_commission')?.value||0,can_view_closed_cases=!!$('v18_closed')?.checked;
+      if(!name)throw new Error('Name is required');
+      if(btn){btn.disabled=true;btn.innerHTML='<span class="v11Spinner"></span>Saving…';}
+      if(id){await v18AdminApi('update',{user_id:id,name,role,company_ids,permissions,commission_default_pct,can_view_closed_cases});toast('Staff access updated');}
+      else{
+        const email=$('v18_email')?.value.trim(),mode=$('v18_mode')?.value||'invite',password=$('v18_password')?.value||'';
+        await v18AdminApi('create',{email,name,role,company_ids,permissions,commission_default_pct,can_view_closed_cases,mode,password});
+        toast(mode==='invite'?'Account created and invitation requested':'Account created with temporary password');
+      }
+      closeModal();V18_LOADED=false;await v18LoadUsers(true);
+    }catch(e){if(btn){btn.disabled=false;btn.textContent=id?'Save Changes':'Create Account';}modal(`<h2>Unable to Save Staff Account</h2><div class="dangerbox">${esc(e.message||String(e))}</div><button class="btn" onclick="closeModal()">Close</button>`);}
+  };
+
+  window.v18ToggleActive=async function(id,activate){
+    const u=V18_STAFF.find(x=>x.id===id);if(!u)return;
+    if(!confirm(`${activate?'Reactivate':'Deactivate'} ${u.name||u.email}?`))return;
+    try{await v18AdminApi(activate?'reactivate':'deactivate',{user_id:id});toast(activate?'Account reactivated':'Account deactivated');V18_LOADED=false;await v18LoadUsers(true);}catch(e){modal(`<h2>Unable to ${activate?'Reactivate':'Deactivate'} User</h2><div class="dangerbox">${esc(e.message||String(e))}</div><button class="btn" onclick="closeModal()">Close</button>`);}
+  };
+
+  window.v18ResetPassword=async function(id){
+    const u=V18_STAFF.find(x=>x.id===id);if(!u)return;
+    modal(`<h2>Generate Password Reset Link</h2><div class="goodbox"><span class="v11Spinner"></span>Creating secure recovery link for ${esc(u.email||u.name)}…</div>`);
+    try{const r=await v18AdminApi('password_reset_link',{user_id:id});const link=r.action_link||'';modal(`<h2>Password Reset Link</h2><div class="warnbox">This link grants password recovery access. Send it only to the intended staff member.</div><div class="field"><label>${esc(u.email||'Staff')}</label><div class="v10LinkRow"><input id="v18_reset_link" readonly value="${esc(link)}"><button class="btn" onclick="navigator.clipboard.writeText($('v18_reset_link').value).then(()=>toast('Reset link copied'))">Copy</button></div></div><button class="btn" onclick="closeModal()">Close</button>`);}catch(e){modal(`<h2>Unable to Generate Reset Link</h2><div class="dangerbox">${esc(e.message||String(e))}</div><button class="btn" onclick="closeModal()">Close</button>`);}
+  };
+
+  window.v18DeleteUser=async function(id){
+    const u=V18_STAFF.find(x=>x.id===id);if(!u)return;
+    if(u.active)return modal(`<h2>Deactivate First</h2><div class="warnbox">Permanent deletion is reserved for accounts created by mistake. Deactivate <b>${esc(u.name||u.email)}</b> first. Historical staff should remain deactivated so cases, approvals, commissions and signatures keep their audit identity.</div><button class="btn" onclick="closeModal()">Close</button>`);
+    if(!confirm(`PERMANENTLY delete ${u.name||u.email}? This only succeeds if the account has no historical business references.`))return;
+    try{await v18AdminApi('delete',{user_id:id});toast('Unused staff account permanently deleted');V18_LOADED=false;await v18LoadUsers(true);}catch(e){modal(`<h2>Permanent Delete Blocked</h2><div class="dangerbox">${esc(e.message||String(e))}</div><p class="small">For staff with historical records, keep the account Deactivated instead.</p><button class="btn" onclick="closeModal()">Close</button>`);}
+  };
+
+  P.users=function(){
+    if(V11_PROFILE?.role!=='Superadmin')return head('Users & Access','Real staff account administration is restricted to Superadmin.','Users')+'<div class="dangerbox"><b>Superadmin access required.</b><br>Your own account and project permissions remain active, but you cannot administer other staff.</div>';
+    if(!V18_LOADED&&!V18_LOADING&&!V18_ERROR)setTimeout(()=>v18LoadUsers(false),0);
+    const toolbar='<button class="btn" onclick="v18LoadUsers(true)">Refresh</button> <button class="btn p" onclick="v18OpenUser()">+ Create Staff Account</button>';
+    if(V18_LOADING&&!V18_LOADED)return head('Users & Access','Real Supabase Auth accounts, company access and role permissions.','Users',toolbar)+'<div class="card"><span class="v11Spinner"></span>Loading real staff accounts from Supabase…</div>';
+    if(V18_ERROR)return head('Users & Access','Real Supabase Auth accounts, company access and role permissions.','Users',toolbar)+`<div class="dangerbox"><b>${esc(V18_ERROR)}</b><br><span class="small">Run SQL 07 and deploy the <b>user-admin</b> Edge Function, then press Refresh.</span></div>`;
+    const rows=V18_STAFF.map(u=>{
+      const companies=u.role==='Superadmin'?'All Companies':(u.company_ids||[]).map(v18CompanyName).join(', ')||'-';
+      const sales=V18_SALES_ROLES.has(u.role),self=v18IsSelf(u.id),status=u.active?'<span class="pill green">Active</span>':'<span class="pill gray">Deactivated</span>',auth=u.email_confirmed_at?'<span class="pill green">Login Ready</span>':'<span class="pill orange">Invite Pending</span>';
+      return `<tr><td><b>${esc(u.name||'-')}</b><br><span class="small">${esc(u.email||'')}</span></td><td>${esc(u.role||'Viewer')}</td><td>${esc(companies)}</td><td>${sales?Number(u.commission_default_pct||0).toFixed(2)+'%':'-'}</td><td>${status}<br>${auth}</td><td><span class="small">${u.last_sign_in_at?'Last sign-in '+esc(new Date(u.last_sign_in_at).toLocaleString()):'No sign-in yet'}</span></td><td><div class="v18Actions"><button class="btn s" onclick="v18OpenUser('${u.id}')">Edit</button><button class="btn s" onclick="v18ResetPassword('${u.id}')">Reset Password</button>${self?'':u.active?`<button class="btn s r" onclick="v18ToggleActive('${u.id}',false)">Deactivate</button>`:`<button class="btn s g" onclick="v18ToggleActive('${u.id}',true)">Reactivate</button><button class="btn s r" onclick="v18DeleteUser('${u.id}')">Permanent Delete</button>`}</div></td></tr>`;
+    }).join('');
+    const audit=V18_AUDIT.map(a=>`<tr><td>${esc(new Date(a.created_at).toLocaleString())}</td><td>${esc(a.actor_email||'-')}</td><td>${esc(a.action||'')}</td><td>${esc(a.target_email||'-')}</td></tr>`).join('');
+    return head('Users & Access','Create, edit, deactivate and safely remove real Supabase staff accounts. Only Superadmin can administer users.','Users',toolbar)+`<div class="goodbox"><b>Production-style account control:</b> Deactivate is the normal way to remove former staff access while preserving historical cases, commissions, approvals and signatures. Permanent Delete is only allowed for unused accounts with no historical references.</div><div class="card"><h3>Staff Accounts</h3><div class="wrap"><table><tr><th>Name / Email</th><th>Role</th><th>Company Access</th><th>Default Commission</th><th>Status</th><th>Activity</th><th>Actions</th></tr>${rows||'<tr><td colspan="7">No staff accounts found.</td></tr>'}</table></div></div><br><div class="card"><h3>User Administration Audit</h3><div class="wrap"><table><tr><th>Date</th><th>Superadmin</th><th>Action</th><th>Target</th></tr>${audit||'<tr><td colspan="4">No account administration activity yet.</td></tr>'}</table></div></div>`;
+  };
+
+  async function v18CheckOwnAccount(){
+    if(!V11_SESSION?.access_token)return;
+    try{
+      const uid=V11_SESSION.user?.id;if(!uid)return;
+      const rows=await v11RestSelect('profiles',`select=active,role&id=eq.${encodeURIComponent(uid)}&limit=1`);
+      if(!rows?.length||rows[0].active===false){if(V18_GUARD_TIMER)clearInterval(V18_GUARD_TIMER);await v11SignOut();return;}
+    }catch(e){console.warn('v0.18 account guard:',e.message);}
+  }
+  const v18BaseStartApp=v11StartApp;
+  v11StartApp=function(){v18BaseStartApp();if(V18_GUARD_TIMER)clearInterval(V18_GUARD_TIMER);V18_GUARD_TIMER=setInterval(v18CheckOwnAccount,60000);};
+
+  const v18BaseLayout=layout;
+  layout=function(){v18BaseLayout();const n=document.querySelector('.side .note');if(n)n.innerHTML='<b>v0.18 Secure User Administration</b><br>Superadmin can create real Supabase staff accounts, manage company access/permissions, deactivate former staff, generate reset links and permanently delete only unused accounts.';};
+
+  const css=document.createElement('style');css.textContent=`
+    .v18ChoiceGrid{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:8px}.v18Choice{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--l);border-radius:10px;padding:9px;background:#fff}.v18Choice span,.v18Choice small{display:block}.v18PermGrid{display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:7px}.v18Perm{border:1px solid var(--l);border-radius:9px;padding:8px;background:#fff;font-size:12px}.v18Actions{display:flex;gap:6px;flex-wrap:wrap;min-width:230px}.v18UserModal .form{margin-top:12px}.v18UserModal small{color:#667085;display:block;margin-top:4px}
+    @media(max-width:900px){.v18PermGrid{grid-template-columns:repeat(2,minmax(180px,1fr))}}@media(max-width:650px){.v18ChoiceGrid,.v18PermGrid{grid-template-columns:1fr}.v18Actions{min-width:0}}
+  `;document.head.appendChild(css);
+  document.title='Brick & Decor PWA v0.18 Secure User Administration';
+})();
+</script>
+<script>if($('modal'))$('modal').onclick=e=>{if(e.target.id=='modal')closeModal()};
 Promise.resolve().then(()=>v11Boot()).catch(e=>{console.error('B&D startup failed',e);document.body.innerHTML=`<div class="v11Loading"><div><h2>Unable to start B&D</h2><p>${String(e?.message||e||'Unknown startup error')}</p><button class="btn p" onclick="location.reload()">Retry</button></div></div>`;});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('Service worker registration failed',e));
 </script></body></html>
