@@ -2858,6 +2858,89 @@ async function v11Boot(){
   document.title='Brick & Decor PWA v0.18 Secure User Administration';
 })();
 </script>
+<script>
+/* Brick & Decor PWA v0.18.1 — quotation service library filtered by Work Section */
+(function(){
+  const ranges=[
+    [0,8,'Hacking Works'],
+    [9,10,'Carpentry / Misc Hacking Works'],
+    [11,11,'Demolishing Works'],
+    [12,13,'Ceiling works & Partition Works'],
+    [14,27,'Masonry Works'],
+    [28,33,'Vinyl Works'],
+    [34,44,'Carpentry Works'],
+    [45,46,'Sintered Surface Table Top'],
+    [47,50,'Glass Works'],
+    [51,52,'Plumbing works'],
+    [53,55,'Paint works'],
+    [56,60,'Window Works'],
+    [61,63,'Door / Gate Works'],
+    [64,64,'Aluminium Door Works'],
+    [65,65,'Miscellaneous Works'],
+    [66,67,'Carpentry Works'],
+    [68,68,'Paint works']
+  ];
+  const norm=v=>String(v||'').trim().toLowerCase().replace(/\s+/g,' ');
+  const canonical=v=>{
+    const n=norm(v);
+    if(n==='painting works'||n==='painting work'||n==='paint work')return 'paint works';
+    if(n==='plumbing work')return 'plumbing works';
+    if(n==='window work')return 'window works';
+    if(n==='ceiling works and partition works')return 'ceiling works & partition works';
+    return n;
+  };
+  const lib=window.V13_SERVICES||[];
+  ranges.forEach(([a,b,section])=>{for(let i=a;i<=b&&i<lib.length;i++){lib[i].workSection=section;}});
+
+  window.v181ServicesForSection=function(section){
+    const c=canonical(section);
+    if(!c||c==='__custom')return [];
+    return lib.filter(x=>canonical(x.workSection)===c);
+  };
+  window.v181RefreshServiceDatalist=function(){
+    const sectionSel=$('v14_section');
+    const list=$('v14_service_list');
+    if(!sectionSel||!list)return;
+    const section=sectionSel.value==='__custom'?($('v14_custom_section')?.value||''):sectionSel.value;
+    const matches=v181ServicesForSection(section);
+    list.innerHTML=matches.map(x=>`<option value="${esc(x.name)}"></option>`).join('');
+    document.querySelectorAll('.v14ScopeRow input[id^="v14_item_"]').forEach(input=>{
+      input.placeholder=matches.length?`Choose from ${section} services or type a custom service`:'No preset services — type a custom service';
+    });
+    const help=document.querySelector('.v14ItemsToolbar .small');
+    if(help){
+      help.innerHTML=matches.length
+        ? `<b>${matches.length}</b> preset service${matches.length===1?'':'s'} for <b>${esc(section)}</b>. You can still type a custom service.`
+        : `No preset services are linked to <b>${esc(section||'this custom Work Section')}</b> yet. Type a custom service if needed.`;
+    }
+  };
+
+  const baseSectionChanged=window.v14SectionChanged;
+  window.v14SectionChanged=function(){
+    if(typeof baseSectionChanged==='function')baseSectionChanged();
+    const custom=$('v14_custom_section');
+    if(custom&&!custom.dataset.v181Bound){
+      custom.dataset.v181Bound='1';
+      custom.addEventListener('input',()=>v181RefreshServiceDatalist());
+    }
+    v181RefreshServiceDatalist();
+  };
+  const baseAddScopeLine=window.v14AddScopeLine;
+  window.v14AddScopeLine=function(data={}){
+    const r=typeof baseAddScopeLine==='function'?baseAddScopeLine(data):undefined;
+    v181RefreshServiceDatalist();
+    return r;
+  };
+
+  const baseLayout=layout;
+  layout=function(){
+    baseLayout();
+    const n=document.querySelector('.side .note');
+    if(n)n.innerHTML='<b>v0.18.1 Work-Section Service Filter</b><br>Quotation service suggestions now follow the selected Work Section, while custom service wording remains available. Secure Superadmin user administration from v0.18 is retained.';
+  };
+  document.title='Brick & Decor PWA v0.18.1 Work-Section Service Filter';
+})();
+</script>
 <script>if($('modal'))$('modal').onclick=e=>{if(e.target.id=='modal')closeModal()};
 Promise.resolve().then(()=>v11Boot()).catch(e=>{console.error('B&D startup failed',e);document.body.innerHTML=`<div class="v11Loading"><div><h2>Unable to start B&D</h2><p>${String(e?.message||e||'Unknown startup error')}</p><button class="btn p" onclick="location.reload()">Retry</button></div></div>`;});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('Service worker registration failed',e));
