@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Brick &amp; Decor PWA v0.14.1 Startup Hotfix</title><link rel="manifest" href="manifest.json"><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Brick &amp; Decor PWA v0.18.2 Quotation UX + Signed Copy</title><link rel="manifest" href="manifest.json"><style>
 :root{--r:#B88746;--rs:#F7F0E6;--bg:#F6F4EF;--c:#fff;--l:#E5DED2;--t:#17202A;--m:#6B7280;--g:#16845B;--o:#B7791F;--b:#1F4E79;--d:#B42318;--nav:#0E1A2B;--nav2:#14243A;--gold:#D6B06A;--sh:0 14px 36px rgba(23,32,42,.08)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:"Segoe UI",Roboto,Arial,sans-serif;color:var(--t);letter-spacing:.01em}button,input,select,textarea{font:inherit}.app{display:flex;min-height:100vh}
 .side{position:fixed;inset:0 auto 0 0;width:252px;background:linear-gradient(180deg,var(--nav),#111827);border-right:1px solid rgba(255,255,255,.08);padding:22px 18px;overflow:auto}.main{margin-left:252px;width:calc(100% - 252px)}
@@ -2014,19 +2014,29 @@ async function v11Boot(){
   function v14ItemCell(it,seen){return `<b>${esc(it.name)}</b>${it.desc?`<div class="v14PrintDesc">${esc(it.desc).replace(/\n/g,'<br>')}</div>`:''}<span class="v14PrintQty">${Number(it.qty||0)} ${esc(it.unit||'')}</span>${v14UpgradeMedia(it.name,seen)}`;}
   function v14CustomerScope(items){
     const groups=v14BuildGroups(items),seen=new Set(),parts=[];
-    Object.entries(groups).forEach(([section,areas])=>{
+    const sections=Object.entries(groups).sort(([a],[b])=>a==='Professional Services'?-1:b==='Professional Services'?1:0);
+    sections.forEach(([section,areas])=>{
       parts.push(`<div class="v14PrintSection">${esc(section)}</div>`);
+      if(section==='Professional Services'){
+        const rows=[],normals=[];
+        Object.values(areas).forEach(g=>g.normal.forEach(x=>normals.push(x)));
+        normals.sort((a,b)=>{const aa=a.it.standardFixed||String(a.it.pricingType||'')==='Complimentary'?0:1,bb=b.it.standardFixed||String(b.it.pricingType||'')==='Complimentary'?0:1;return aa-bb;});
+        normals.forEach(({it})=>{const hideQty=!!it.standardFixed||String(it.pricingType||'')==='Complimentary';rows.push(`<tr><td><b>${esc(it.name)}</b>${it.desc?`<div class="v14PrintDesc">${esc(it.desc).replace(/\n/g,'<br>')}</div>`:''}${hideQty?'':`<span class="v14PrintQty">${Number(it.qty||0)} ${esc(it.unit||'')}</span>`}${v14UpgradeMedia(it.name,seen)}</td><td>${itemCounts(it)?money(Number(it.qty||0)*Number(it.price||0)):esc(it.pricingType||'Inclusive')}</td></tr>`);});
+        Object.entries(areas).forEach(([area,g])=>Object.entries(g.combined).forEach(([gid,members])=>{const ch=g.charges[gid]?.it,amount=Number(ch?.price||members[0]?.it?.lumpGroupAmount||0),label=ch?.lumpGroupLabel||ch?.name||members[0]?.it?.lumpGroupLabel||`${area} Package`;rows.push(`<tr><td><b>${esc(label)}</b><div class="v14CombinedItems">${members.map(({it})=>`<div>• ${esc(it.name)}${it.desc?`<span>${esc(it.desc).replace(/\n/g,'<br>')}</span>`:''}${v14UpgradeMedia(it.name,seen)}</div>`).join('')}</div></td><td><b>${money(amount)}</b></td></tr>`);}));
+        if(rows.length)parts.push(`<table class="v14ScopeTable"><tr><th>Scope of Works</th><th>Amount</th></tr>${rows.join('')}</table>`);
+        return;
+      }
       Object.entries(areas).forEach(([area,g])=>{
-        const standard=section==='Professional Services'&&area==='Professional Services';
-        if(!standard)parts.push(`<div class="v14PrintArea">${esc(area)}</div>`);
+        parts.push(`<div class="v14PrintArea">${esc(area)}</div>`);
         const rows=[];
         g.normal.forEach(({it})=>rows.push(`<tr><td>${v14ItemCell(it,seen)}</td><td>${itemCounts(it)?money(Number(it.qty||0)*Number(it.price||0)):esc(it.pricingType||'Inclusive')}</td></tr>`));
-        Object.entries(g.combined).forEach(([gid,members])=>{const ch=g.charges[gid]?.it,amount=Number(ch?.price||members[0]?.it?.lumpGroupAmount||0),label=ch?.lumpGroupLabel||ch?.name||members[0]?.it?.lumpGroupLabel||`${area} Package`;rows.push(`<tr><td><b>${esc(label)}</b><div class="v14CombinedItems">${members.map(({it})=>`<div>• ${esc(it.name)}${it.desc?`<span>${esc(it.desc)}</span>`:''}${v14UpgradeMedia(it.name,seen)}</div>`).join('')}</div></td><td><b>${money(amount)}</b></td></tr>`);});
+        Object.entries(g.combined).forEach(([gid,members])=>{const ch=g.charges[gid]?.it,amount=Number(ch?.price||members[0]?.it?.lumpGroupAmount||0),label=ch?.lumpGroupLabel||ch?.name||members[0]?.it?.lumpGroupLabel||`${area} Package`;rows.push(`<tr><td><b>${esc(label)}</b><div class="v14CombinedItems">${members.map(({it})=>`<div>• ${esc(it.name)}${it.desc?`<span>${esc(it.desc).replace(/\n/g,'<br>')}</span>`:''}${v14UpgradeMedia(it.name,seen)}</div>`).join('')}</div></td><td><b>${money(amount)}</b></td></tr>`);});
         if(rows.length)parts.push(`<table class="v14ScopeTable"><tr><th>Scope of Works</th><th>Amount</th></tr>${rows.join('')}</table>`);
       });
     });
     return parts.join('');
   }
+
   scopeRows=function(q){v14EnsureStandard(q);return v14CustomerScope(q.items||[]);};
 
   let V14_SEQ=0,V14_EDIT_GROUP='',V14_EDIT_ITEM=-1;
@@ -2588,23 +2598,29 @@ async function v11Boot(){
       else if(gid){g.groups[gid]=g.groups[gid]||[];g.groups[gid].push(it);}
       else g.normal.push(it);
     });
-    const out=[];
-    Object.entries(sections).forEach(([section,areas])=>{
+    const out=[],sectionEntries=Object.entries(sections).sort(([a],[b])=>a==='Professional Services'?-1:b==='Professional Services'?1:0);
+    sectionEntries.forEach(([section,areas])=>{
       out.push(`<div class="v17PrintSection">${esc(section)}</div>`);
+      if(section==='Professional Services'){
+        const rows=[],normals=[];
+        Object.values(areas).forEach(g=>g.normal.forEach(it=>normals.push(it)));
+        normals.sort((a,b)=>{const aa=String(a.pricing_type||'')==='Complimentary'?0:1,bb=String(b.pricing_type||'')==='Complimentary'?0:1;return aa-bb;});
+        normals.forEach(it=>{const p=String(it.pricing_type||'Amount'),amt=p==='Amount'?v17Money(it.charge_amount):esc(p||'Inclusive'),hideQty=p==='Complimentary';rows.push(`<tr><td><b>${esc(it.item_name||'')}</b>${it.description?`<div class="v17ItemDesc">${v17Lines(it.description)}</div>`:''}${hideQty?'':`<span class="v17Qty">${Number(it.qty||0)} ${esc(it.unit||'')}</span>`}${v17UpgradeMedia(it.item_name,seen)}</td><td>${amt}</td></tr>`);});
+        Object.entries(areas).forEach(([area,g])=>Object.entries(g.groups).forEach(([gid,members])=>{const ch=g.charges[gid],label=ch?.item_name||`${area} Package`,amount=Number(ch?.charge_amount||0);rows.push(`<tr><td><b>${esc(label)}</b><div class="v17CombinedPrint">${members.map(it=>`<div class="v17CombinedPrintItem">• <b>${esc(it.item_name||'')}</b>${it.description?`<span>${v17Lines(it.description)}</span>`:''}${v17UpgradeMedia(it.item_name,seen)}</div>`).join('')}</div></td><td><b>${v17Money(amount)}</b></td></tr>`);}));
+        if(rows.length)out.push(`<table class="v17ScopeTable"><tr><th>Scope of Works</th><th>Amount</th></tr>${rows.join('')}</table>`);
+        return;
+      }
       Object.entries(areas).forEach(([area,g])=>{
-        const standard=section==='Professional Services'&&area==='Professional Services';
-        if(!standard)out.push(`<div class="v17PrintArea">${esc(area)}</div>`);
+        out.push(`<div class="v17PrintArea">${esc(area)}</div>`);
         const rows=[];
-        g.normal.forEach(it=>{
-          const p=String(it.pricing_type||'Amount'),amt=p==='Amount'?v17Money(it.charge_amount):esc(p||'Inclusive');
-          rows.push(`<tr><td><b>${esc(it.item_name||'')}</b>${it.description?`<div class="v17ItemDesc">${v17Lines(it.description)}</div>`:''}${standard?'':`<span class="v17Qty">${Number(it.qty||0)} ${esc(it.unit||'')}</span>`}${v17UpgradeMedia(it.item_name,seen)}</td><td>${amt}</td></tr>`);
-        });
+        g.normal.forEach(it=>{const p=String(it.pricing_type||'Amount'),amt=p==='Amount'?v17Money(it.charge_amount):esc(p||'Inclusive');rows.push(`<tr><td><b>${esc(it.item_name||'')}</b>${it.description?`<div class="v17ItemDesc">${v17Lines(it.description)}</div>`:''}<span class="v17Qty">${Number(it.qty||0)} ${esc(it.unit||'')}</span>${v17UpgradeMedia(it.item_name,seen)}</td><td>${amt}</td></tr>`);});
         Object.entries(g.groups).forEach(([gid,members])=>{const ch=g.charges[gid],label=ch?.item_name||`${area} Package`,amount=Number(ch?.charge_amount||0);rows.push(`<tr><td><b>${esc(label)}</b><div class="v17CombinedPrint">${members.map(it=>`<div class="v17CombinedPrintItem">• <b>${esc(it.item_name||'')}</b>${it.description?`<span>${v17Lines(it.description)}</span>`:''}${v17UpgradeMedia(it.item_name,seen)}</div>`).join('')}</div></td><td><b>${v17Money(amount)}</b></td></tr>`);});
         if(rows.length)out.push(`<table class="v17ScopeTable"><tr><th>Scope of Works</th><th>Amount</th></tr>${rows.join('')}</table>`);
       });
     });
     return out.join('');
   }
+
   function v17StaffSigns(map){const vals=Object.values(map||{});return vals.length?vals.map(s=>`<div class="v17PersonSign">${s?.data?`<img src="${s.data}" alt="${esc(s.name||'Staff')} signature">`:'<div class="v17SignLine"></div>'}<b>${esc(s?.name||'Interior Designer / ID')}</b><span>Interior Designer / ID</span>${s?.date?`<small>${esc(new Date(s.date).toLocaleDateString())}</small>`:''}</div>`).join(''):'<div class="v17PersonSign"><div class="v17SignLine"></div><b>Interior Designer / ID</b><span>Company Signature</span></div>';}
   function v17ClientSign(customer,signed){
     if(signed?.signature_data)return `<div class="v17PersonSign"><img src="${signed.signature_data}" alt="Customer signature"><b>${esc(signed.signed_by||customer.name||'Customer')}</b><span>Client / Contract Approval</span>${signed.signed_at?`<small>${esc(new Date(signed.signed_at).toLocaleString())}</small>`:''}</div>`;
@@ -2940,6 +2956,241 @@ async function v11Boot(){
   };
   document.title='Brick & Decor PWA v0.18.1 Work-Section Service Filter';
 })();
+</script>
+<script>
+/* Brick & Decor PWA v0.18.2 — inline quotation editor + signed revision history + readable documents */
+(function(){
+  // ---------------------------------------------------------------------------
+  // A. Navigation: Companies now sits immediately below Master Data.
+  // ---------------------------------------------------------------------------
+  try{
+    const ci=NAV.findIndex(x=>x[0]==='companies');
+    if(ci>=0){
+      const company=NAV.splice(ci,1)[0];
+      const mi=NAV.findIndex(x=>x[0]==='master');
+      NAV.splice(mi>=0?mi+1:NAV.length,0,company);
+    }
+  }catch(e){console.warn('v0.18.2 nav reorder',e);}
+
+  // ---------------------------------------------------------------------------
+  // B. Persistent quotation service library.
+  //    The 69 imported PWA-list services already have workSection assigned by
+  //    v0.18.1. We persist that mapping so Superadmin can manage it visually.
+  // ---------------------------------------------------------------------------
+  const v182Norm=v=>String(v||'').trim().toLowerCase().replace(/\s+/g,' ');
+  const v182Canonical=v=>{
+    const n=v182Norm(v);
+    if(n==='painting works'||n==='painting work'||n==='paint work')return 'paint works';
+    if(n==='plumbing work')return 'plumbing works';
+    if(n==='window work')return 'window works';
+    if(n==='ceiling works and partition works')return 'ceiling works & partition works';
+    return n;
+  };
+  const V182_BASE_SERVICES=(window.V13_SERVICES||[]).map((x,i)=>({
+    id:`QS${String(i+1).padStart(3,'0')}`,name:String(x.name||''),desc:String(x.desc||''),unit:String(x.unit||'Lot'),workSection:String(x.workSection||''),active:x.active!==false
+  }));
+  function v182EnsureServiceLibrary(){
+    if(!Array.isArray(S.settings.quotationServices)||!S.settings.quotationServices.length){S.settings.quotationServices=V182_BASE_SERVICES.map(x=>({...x}));save();}
+    return S.settings.quotationServices;
+  }
+  v182EnsureServiceLibrary();
+  function v182SyncServiceRuntime(){
+    const lib=window.V13_SERVICES||[];
+    const active=(S.settings.quotationServices||[]).filter(x=>x.active!==false);
+    lib.splice(0,lib.length,...active.map(x=>({name:x.name,desc:x.desc||'',unit:x.unit||'Lot',workSection:x.workSection||''})));
+  }
+  v182SyncServiceRuntime();
+  window.v181ServicesForSection=function(section){
+    const c=v182Canonical(section);
+    if(!c||c==='__custom')return [];
+    return (S.settings.quotationServices||[]).filter(x=>x.active!==false&&v182Canonical(x.workSection)===c);
+  };
+
+  function v182ServiceSummary(){
+    const services=v182EnsureServiceLibrary();
+    const sections=[...(S.settings.scopeSections||[])];
+    services.forEach(x=>{if(x.workSection&&!sections.some(s=>v182Canonical(s)===v182Canonical(x.workSection)))sections.push(x.workSection);});
+    return `<div class="card v182ServiceLibraryCard"><div class="sectionToolbar"><div><h3>Quotation Service Library</h3><p class="small">The quotation Item / Service selector reads from this library and filters by Work Section. Existing quotations keep their saved wording even if this library is changed later.</p></div>${user().role==='Superadmin'?'<button class="btn p" onclick="v182EditService()">+ Add Service</button>':''}</div><div class="v182ServiceStats">${sections.map(section=>{const total=services.filter(x=>x.active!==false&&v182Canonical(x.workSection)===v182Canonical(section)).length;return `<button class="v182ServiceStat" onclick="v182OpenServiceLibrary('${String(section).replace(/'/g,"\\'")}')"><b>${esc(section)}</b><span>${total} active service${total===1?'':'s'}</span></button>`;}).join('')}</div></div>`;
+  }
+  const v182BaseMaster=P.master;
+  P.master=function(){
+    const html=v182BaseMaster(),d=document.createElement('div');d.innerHTML=html;
+    [...d.querySelectorAll('.card')].forEach(card=>{
+      const h=card.querySelector('h3')?.textContent.trim();
+      if(h==='Company Document Templates'||h==='Item Master')card.remove();
+    });
+    [...d.querySelectorAll('.grid.two')].forEach(g=>{if(!g.children.length)g.remove();});
+    d.insertAdjacentHTML('beforeend','<br>'+v182ServiceSummary());
+    return d.innerHTML;
+  };
+
+  window.v182OpenServiceLibrary=function(section=''){
+    const all=S.settings.quotationServices||[];
+    const sections=[...(S.settings.scopeSections||[])];
+    all.forEach(x=>{if(x.workSection&&!sections.some(s=>v182Canonical(s)===v182Canonical(x.workSection)))sections.push(x.workSection);});
+    const current=section||sections[0]||'';
+    const rows=all.filter(x=>v182Canonical(x.workSection)===v182Canonical(current));
+    modal(`<div class="v182ServiceManage"><div class="sectionToolbar"><div><h2>Quotation Service Library</h2><p class="small">Manage services under each Work Section. Deactivated services stop appearing in new quotations but existing quotation wording is untouched.</p></div>${user().role==='Superadmin'?`<button class="btn p" onclick="v182EditService('','${String(current).replace(/'/g,"\\'")}')">+ Add Service</button>`:''}</div><div class="field"><label>Work Section</label><select id="v182_manage_section" onchange="v182OpenServiceLibrary(this.value)">${sections.map(s=>`<option ${v182Canonical(s)===v182Canonical(current)?'selected':''}>${esc(s)}</option>`).join('')}</select></div><div class="v182ServiceManageList">${rows.map(x=>`<div class="v182ServiceManageRow ${x.active===false?'isOff':''}"><div><b>${esc(x.name)}</b>${x.desc?`<div class="small v182Pre">${esc(x.desc)}</div>`:''}<span class="small">Default unit: ${esc(x.unit||'Lot')} · ${x.active===false?'Deactivated':'Active'}</span></div>${user().role==='Superadmin'?`<div class="actions"><button class="btn s" onclick="v182EditService('${x.id}','${String(current).replace(/'/g,"\\'")}')">Edit</button><button class="btn s" onclick="v182ToggleService('${x.id}')">${x.active===false?'Reactivate':'Deactivate'}</button><button class="btn s r" onclick="v182DeleteService('${x.id}')">Delete</button></div>`:''}</div>`).join('')||'<div class="soft">No services linked to this Work Section yet.</div>'}</div></div>`);
+  };
+  window.v182EditService=function(id='',fallbackSection=''){
+    if(user().role!=='Superadmin')return toast('Only Superadmin can manage quotation services');
+    const x=(S.settings.quotationServices||[]).find(r=>r.id===id)||{id:'',name:'',desc:'',unit:'Lot',workSection:fallbackSection||(S.settings.scopeSections||[])[0]||'',active:true};
+    const sections=[...(S.settings.scopeSections||[])];if(x.workSection&&!sections.includes(x.workSection))sections.push(x.workSection);
+    modal(`<div class="v182ServiceEditor"><h2>${id?'Edit':'Add'} Quotation Service</h2><div class="form"><div class="field full"><label>Service Wording</label><textarea id="v182_service_name" rows="2">${esc(x.name)}</textarea></div><div class="field"><label>Work Section</label><select id="v182_service_section">${sections.map(s=>`<option ${v182Canonical(s)===v182Canonical(x.workSection)?'selected':''}>${esc(s)}</option>`).join('')}</select></div><div class="field"><label>Default Unit</label><input id="v182_service_unit" value="${esc(x.unit||'Lot')}"></div><div class="field full"><label>Default Description</label><textarea id="v182_service_desc" rows="5">${esc(x.desc||'')}</textarea></div><div class="field full"><label class="check"><input id="v182_service_active" type="checkbox" ${x.active!==false?'checked':''}> Active / available in quotation selector</label></div></div><div class="actions"><button class="btn" onclick="${fallbackSection?`v182OpenServiceLibrary('${String(fallbackSection).replace(/'/g,"\\'")}')`:'closeModal()'}">Cancel</button><button class="btn p" onclick="v182SaveService('${id}')">Save Service</button></div></div>`);
+  };
+  window.v182SaveService=function(id=''){
+    const name=$('v182_service_name')?.value.trim(),workSection=$('v182_service_section')?.value||'',unit=$('v182_service_unit')?.value.trim()||'Lot',desc=$('v182_service_desc')?.value.trim()||'',active=!!$('v182_service_active')?.checked;
+    if(!name||!workSection)return toast('Service wording and Work Section are required');
+    const list=S.settings.quotationServices||[];
+    if(id){const x=list.find(r=>r.id===id);if(x)Object.assign(x,{name,workSection,unit,desc,active});}
+    else list.push({id:uid('QS'),name,workSection,unit,desc,active});
+    S.settings.quotationServices=list;v182SyncServiceRuntime();save();closeModal();show('master');toast('Quotation Service Library saved');
+  };
+  window.v182ToggleService=function(id){const x=(S.settings.quotationServices||[]).find(r=>r.id===id);if(!x)return;x.active=x.active===false;v182SyncServiceRuntime();save();v182OpenServiceLibrary(x.workSection);};
+  window.v182DeleteService=function(id){const x=(S.settings.quotationServices||[]).find(r=>r.id===id);if(!x)return;if(!confirm(`Delete “${x.name}” from the quotation service library? Existing quotations will not be changed.`))return;S.settings.quotationServices=S.settings.quotationServices.filter(r=>r.id!==id);v182SyncServiceRuntime();save();v182OpenServiceLibrary(x.workSection);};
+
+  // ---------------------------------------------------------------------------
+  // C. Inline quotation scope editor — replaces the cramped modal.
+  // ---------------------------------------------------------------------------
+  let V182_SCOPE=null,V182_SEQ=0;
+  function v182EmptyScope(){return {quoteId:qDetail,groupId:'',itemIndex:-1,section:(S.settings.scopeSections||[])[0]||'',area:'',mode:'Individual Amount',label:'',amount:0,rows:[{}]};}
+  function v182OpenScope(opts={}){
+    const q=S.quotes.find(x=>x.id===qDetail);if(!q)return;
+    const st=v182EmptyScope();st.groupId=opts.groupId||'';st.itemIndex=Number.isInteger(opts.itemIndex)?opts.itemIndex:-1;
+    if(st.groupId){const ch=q.items.find(i=>i.lumpGroupId===st.groupId&&(i.isLumpCharge||String(i.pricingType||'').startsWith('Lump Sum:'))),mem=q.items.filter(i=>i.lumpGroupId===st.groupId&&!i.isLumpCharge&&!String(i.pricingType||'').startsWith('Lump Sum:'));if(ch){st.section=ch.section||st.section;st.area=ch.area||'';st.mode='Combined Amount';st.label=ch.lumpGroupLabel||ch.name||'';st.amount=Number(ch.price||0);st.rows=mem.map(x=>({...x}));}}
+    else if(st.itemIndex>=0){const i=q.items[st.itemIndex];if(!i)return;st.section=i.section||st.section;st.area=i.area||'';st.rows=[{...i}];}
+    V182_SCOPE=st;show('quotation');setTimeout(()=>document.getElementById('v182_scope_editor')?.scrollIntoView({behavior:'smooth',block:'start'}),40);
+  }
+  window.v182OpenScopeEditor=function(){v182OpenScope({});};
+  addQItem=function(){v182OpenScope({});};
+  window.v13EditLumpGroup=function(gid){v182OpenScope({groupId:gid});};
+  editQuoteItem=function(n){const q=S.quotes.find(x=>x.id===qDetail),i=q?.items?.[n];if(!i)return;if(i.standardFixed)return toast('Use Edit Services in Professional Services to change the standard section');if(i.lumpGroupId)return v182OpenScope({groupId:i.lumpGroupId});v182OpenScope({itemIndex:n});};
+  window.v182CancelScope=function(){V182_SCOPE=null;show('quotation');};
+
+  function v182SectionOptions(current){return (S.settings.scopeSections||[]).map(s=>`<option value="${esc(s)}" ${v182Canonical(s)===v182Canonical(current)?'selected':''}>${esc(s)}</option>`).join('')+`<option value="__custom" ${current&&!(S.settings.scopeSections||[]).some(s=>v182Canonical(s)===v182Canonical(current))?'selected':''}>+ Custom Work Section</option>`;}
+  function v182AreaOptions(q){return [...new Set([...(S.settings.areaLocations||[]),...(q?.items||[]).map(i=>i.area).filter(Boolean)])].map(a=>`<option value="${esc(a)}"></option>`).join('');}
+  function v182Services(section){return v182EnsureServiceLibrary().filter(x=>x.active!==false&&v182Canonical(x.workSection)===v182Canonical(section));}
+  function v182ScopeRowHtml(data={}){
+    const k=++V182_SEQ;
+    return `<div class="v182ScopeRow" data-key="${k}"><div class="v182ScopeRowTop"><b>Item / Service</b><button class="btn s r" type="button" onclick="this.closest('.v182ScopeRow').remove();v182UpdateServiceHelp()">Remove</button></div><div class="v182MainFields"><div class="field v182ServiceField"><label>Item / Service</label><input id="v182_item_${k}" value="${esc(data.name||'')}" autocomplete="off" placeholder="Search a service or type a custom service" onfocus="v182ServiceSearch(${k})" oninput="v182ServiceSearch(${k})" onblur="setTimeout(()=>v182HideServiceSearch(${k}),180)"><div id="v182_results_${k}" class="v182ServiceResults"></div></div><div class="field"><label>Description</label><textarea id="v182_desc_${k}" rows="4">${esc(data.desc||'')}</textarea></div></div><div class="v182NumberFields"><div class="field"><label>Qty</label><input id="v182_qty_${k}" type="number" step="0.01" min="0" value="${Number(data.qty??1)}"></div><div class="field"><label>Unit</label><input id="v182_unit_${k}" value="${esc(data.unit||'Lot')}"></div><div class="field"><label>Internal Approx Cost / Unit</label><input id="v182_cost_${k}" type="number" step="0.01" min="0" value="${Number(data.cost||0)}"></div><div class="field v182Individual"><label>Pricing Type</label><select id="v182_type_${k}" onchange="v182LineTypeChanged(${k})">${['Amount','Inclusive','Complimentary','F.O.C','Optional'].map(x=>`<option ${x===(data.pricingType||'Amount')?'selected':''}>${x}</option>`).join('')}</select></div><div class="field v182Individual" id="v182_price_wrap_${k}"><label>Selling Price / Unit</label><input id="v182_price_${k}" type="number" step="0.01" min="0" value="${Number(data.price||0)}"></div></div></div>`;
+  }
+  function v182ScopeEditorHtml(q){
+    if(!V182_SCOPE||V182_SCOPE.quoteId!==q.id)return '';
+    const st=V182_SCOPE,custom=!(S.settings.scopeSections||[]).some(s=>v182Canonical(s)===v182Canonical(st.section));V182_SEQ=0;
+    const services=v182Services(st.section);
+    return `<div id="v182_scope_editor" class="card v182ScopeEditor"><div class="sectionToolbar"><div><span class="pill orange">Quotation Editing</span><h2>${st.groupId?'Edit Combined Amount Group':st.itemIndex>=0?'Edit Quotation Item':'Add Quotation Scope'}</h2><p class="small">Work Section → Area / Location → one or more Item / Service rows → pricing. Service suggestions are filtered by the selected Work Section.</p></div><button class="btn" onclick="v182CancelScope()">Close Editor</button></div><div class="v182ScopeGuide"><b>1. Work Section</b><span>→</span><b>2. Area / Location</b><span>→</span><b>3. Items / Services</b><span>→</span><b>4. Pricing</b></div><div class="v182ScopeTop"><div class="field"><label>Work Section</label><select id="v182_section" onchange="v182SectionChanged()">${v182SectionOptions(st.section)}</select></div><div class="field" id="v182_custom_section_wrap" style="display:${custom?'block':'none'}"><label>Custom Work Section</label><input id="v182_custom_section" value="${custom?esc(st.section):''}" oninput="v182SectionChanged()"></div><div class="field"><label>Area / Location</label><input id="v182_area" list="v182_area_list" value="${esc(st.area)}" placeholder="e.g. Kitchen / Master Bedroom"><datalist id="v182_area_list">${v182AreaOptions(q)}</datalist></div><div class="field"><label>Pricing Method</label><select id="v182_price_mode" onchange="v182PriceModeChanged()"><option ${st.mode==='Individual Amount'?'selected':''}>Individual Amount</option><option ${st.mode==='Combined Amount'?'selected':''}>Combined Amount</option></select></div></div><div id="v182_combined_box" class="v182CombinedBox" style="display:${st.mode==='Combined Amount'?'grid':'none'}"><div class="field"><label>Group Title (optional)</label><input id="v182_combined_label" value="${esc(st.label)}" placeholder="e.g. Kitchen Carpentry Package"></div><div class="field"><label>One Combined Amount</label><input id="v182_combined_amount" type="number" min="0" step="0.01" value="${Number(st.amount||0)}"></div><div class="small full">All selected services remain visible to the customer, while only one combined amount is shown for the group.</div></div><div class="v182ItemsToolbar"><div><h3>Items / Services</h3><p id="v182_service_help" class="small"><b>${services.length}</b> active preset service${services.length===1?'':'s'} for <b>${esc(st.section)}</b>. You can still type custom wording.</p></div><button class="btn" type="button" onclick="v182AddScopeRow()">+ Add Another Item</button></div><div id="v182_scope_rows" class="v182ScopeRows">${(st.rows.length?st.rows:[{}]).map(r=>v182ScopeRowHtml(r)).join('')}</div><div class="v182ScopeActions"><button class="btn" onclick="v182CancelScope()">Cancel</button><button class="btn p" onclick="v182SaveScope()">${st.groupId||st.itemIndex>=0?'Save Changes':'Add to Quotation'}</button></div></div>`;
+  }
+  window.v182CurrentSection=function(){const s=$('v182_section');if(!s)return V182_SCOPE?.section||'';return s.value==='__custom'?($('v182_custom_section')?.value.trim()||''):s.value;};
+  window.v182SectionChanged=function(){const s=$('v182_section'),w=$('v182_custom_section_wrap');if(w)w.style.display=s?.value==='__custom'?'block':'none';document.querySelectorAll('.v182ServiceResults').forEach(x=>x.innerHTML='');v182UpdateServiceHelp();};
+  window.v182UpdateServiceHelp=function(){const section=v182CurrentSection(),n=v182Services(section).length,h=$('v182_service_help');if(h)h.innerHTML=n?`<b>${n}</b> active preset service${n===1?'':'s'} for <b>${esc(section)}</b>. Search below or type a custom service.`:`No preset services are linked to <b>${esc(section||'this custom Work Section')}</b>. You can type a custom service.`;};
+  window.v182AddScopeRow=function(data={}){const h=$('v182_scope_rows');if(!h)return;h.insertAdjacentHTML('beforeend',v182ScopeRowHtml(data));v182PriceModeChanged();h.lastElementChild?.querySelector('input[id^="v182_item_"]')?.focus();};
+  window.v182ServiceSearch=function(k){
+    const input=$('v182_item_'+k),box=$('v182_results_'+k);if(!input||!box)return;const q=v182Norm(input.value),section=v182CurrentSection();let rows=v182Services(section);if(q)rows=rows.filter(x=>v182Norm(x.name).includes(q)||v182Norm(x.desc).includes(q));rows=rows.slice(0,14);
+    box.innerHTML=rows.length?rows.map(x=>{const idx=(S.settings.quotationServices||[]).findIndex(r=>r.id===x.id);return `<button type="button" onmousedown="event.preventDefault();v182PickService(${k},${idx})"><b>${esc(x.name)}</b>${x.desc?`<span>${esc(String(x.desc).split(/\r?\n/)[0])}</span>`:''}<small>${esc(x.workSection)} · ${esc(x.unit||'Lot')}</small></button>`;}).join(''):`<div class="v182NoService">No matching preset. Keep typing to use custom wording.</div>`;
+    box.classList.add('show');
+  };
+  window.v182HideServiceSearch=function(k){const box=$('v182_results_'+k);if(box)box.classList.remove('show');};
+  window.v182PickService=function(k,index){const x=(S.settings.quotationServices||[])[index];if(!x)return;const i=$('v182_item_'+k),d=$('v182_desc_'+k),u=$('v182_unit_'+k);if(i)i.value=x.name;if(d&&!d.value)d.value=x.desc||'';if(u)u.value=x.unit||'Lot';v182HideServiceSearch(k);};
+  window.v182LineTypeChanged=function(k){const p=$('v182_price_wrap_'+k),t=$('v182_type_'+k);if(p)p.style.display=t?.value==='Amount'?'block':'none';};
+  window.v182PriceModeChanged=function(){const combined=$('v182_price_mode')?.value==='Combined Amount';document.querySelectorAll('.v182Individual').forEach(x=>x.style.display=combined?'none':'block');const b=$('v182_combined_box');if(b)b.style.display=combined?'grid':'none';if(!combined)document.querySelectorAll('.v182ScopeRow').forEach(r=>v182LineTypeChanged(r.dataset.key));};
+  window.v182SaveScope=function(){
+    const q=S.quotes.find(x=>x.id===qDetail);if(!q||!V182_SCOPE)return;const sel=$('v182_section')?.value,section=sel==='__custom'?$('v182_custom_section')?.value.trim():sel,area=$('v182_area')?.value.trim(),mode=$('v182_price_mode')?.value||'Individual Amount';
+    if(!section||!area)return toast('Work Section and Area / Location are required');
+    const rows=[...document.querySelectorAll('.v182ScopeRow')].map(r=>{const k=r.dataset.key;return {name:$('v182_item_'+k)?.value.trim()||'',desc:$('v182_desc_'+k)?.value.trim()||'',qty:+$('v182_qty_'+k)?.value||0,unit:$('v182_unit_'+k)?.value.trim()||'Lot',cost:+$('v182_cost_'+k)?.value||0,pricingType:$('v182_type_'+k)?.value||'Amount',price:+$('v182_price_'+k)?.value||0};}).filter(x=>x.name);
+    if(!rows.length)return toast('Add at least one Item / Service');
+    if(sel==='__custom'&&!S.settings.scopeSections.includes(section))S.settings.scopeSections.push(section);if(!S.settings.areaLocations.includes(area))S.settings.areaLocations.push(area);
+    if(V182_SCOPE.groupId)q.items=q.items.filter(i=>i.lumpGroupId!==V182_SCOPE.groupId);else if(V182_SCOPE.itemIndex>=0)q.items.splice(V182_SCOPE.itemIndex,1);
+    const known=n=>(S.settings.quotationServices||[]).some(x=>v182Norm(x.name)===v182Norm(n));
+    if(mode==='Combined Amount'){
+      const amount=+$('v182_combined_amount')?.value||0,gid=V182_SCOPE.groupId||uid('LUMP'),label=$('v182_combined_label')?.value.trim()||`${area} - ${section}`,costTotal=rows.reduce((a,r)=>a+Number(r.qty||0)*Number(r.cost||0),0);
+      rows.forEach(r=>q.items.push({...r,custom:!known(r.name),cat:section,area,section,price:0,pricingType:`Included:${gid}`,lumpGroupId:gid,lumpGroupLabel:label,lumpGroupAmount:amount}));
+      q.items.push({custom:true,name:label,cat:section,desc:'',unit:'Lot',qty:1,cost:0,price:amount,area,section,pricingType:`Lump Sum:${gid}`,isLumpCharge:true,lumpGroupId:gid,lumpGroupLabel:label,lumpGroupAmount:amount,lumpCost:costTotal});
+    }else rows.forEach(r=>q.items.push({...r,custom:!known(r.name),cat:section,area,section}));
+    V182_SCOPE=null;save();toast(mode==='Combined Amount'?'Combined amount scope saved':'Quotation scope saved');show('quotation');
+  };
+
+  // ---------------------------------------------------------------------------
+  // D. E-sign history + returned signature preview. SQL 08 gives an explicit,
+  //    stable list of every revision E-sign request. Fallback to the older list
+  //    RPC keeps v0.18.2 usable before SQL 08 is installed.
+  // ---------------------------------------------------------------------------
+  const V182_SIG_CACHE={};let V182_ESIGN_FETCHING=false;
+  const v182BaseFetchEsign=window.v11FetchEsignStatuses||v11FetchEsignStatuses;
+  function v182RevNo(label){const m=String(label||'').match(/(\d+)/);return m?Number(m[1]):0;}
+  function v182BestForRevision(rows,revLabel){const no=v182RevNo(revLabel),matches=(rows||[]).filter(r=>String(r.revision_label||'')===String(revLabel||'')||(no&&Number(r.revision_no||0)===no));return matches.sort((a,b)=>{const sa=String(a.status||'')==='SIGNED'?1:0,sb=String(b.status||'')==='SIGNED'?1:0;if(sa!==sb)return sb-sa;return new Date(b.created_at||0)-new Date(a.created_at||0);})[0]||null;}
+  async function v182FetchHistoryRows(){
+    try{return await v11Rpc('list_my_esign_requests_v182',{},true);}catch(e){console.warn('v0.18.2 SQL08 history RPC unavailable, using existing list RPC:',e.message);try{return await v11Rpc('list_my_esign_requests',{},true);}catch(_){return [];}}
+  }
+  window.v182RefreshEsignHistory=async function(showToast=false,rerender=false){
+    if(!V11_PROFILE||!V11_SESSION?.access_token||V182_ESIGN_FETCHING)return [];
+    V182_ESIGN_FETCHING=true;
+    try{
+      try{if(typeof v182BaseFetchEsign==='function')await v182BaseFetchEsign(false);}catch(e){console.warn('base E-sign refresh',e.message);}
+      const rows=await v182FetchHistoryRows();
+      (S.quotes||[]).forEach(q=>{
+        const mine=(rows||[]).filter(r=>r.quotation_no===q.id).map(r=>({id:r.id,revisionNo:Number(r.revision_no||v182RevNo(r.revision_label)),revisionLabel:r.revision_label||'',status:r.status||'',expiresAt:r.expires_at||'',signedAt:r.signed_at||'',signedBy:r.signed_by||'',createdAt:r.created_at||''}));
+        q.esignHistory=mine;q.esignHistoryCheckedAt=Date.now();
+        const latest=mine.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))[0];if(latest){q.esign=q.esign||{backend:true};q.esign.backend=true;q.esign.requestId=latest.id;q.esign.status=latest.status;q.esign.backendStatus=latest.status;q.esign.revisionLabel=latest.revisionLabel;q.esign.expiresAt=latest.expiresAt;}
+        const signed=mine.filter(x=>x.status==='SIGNED').sort((a,b)=>new Date(b.signedAt||0)-new Date(a.signedAt||0))[0];if(signed&&q.status!=='Accepted'){q.status='Accepted';q.clientApproval={...(q.clientApproval||{}),date:(signed.signedAt||today()).slice(0,10),method:'Customer E-sign',source:'Customer E-sign',remark:'Approved through secure Supabase customer E-sign link',recordedBy:'Customer',signedBy:signed.signedBy||'',approvedRevision:signed.revisionLabel||'',signedAt:signed.signedAt||'',backend:true,esignRequestId:signed.id};const p=S.projects.find(x=>x.id===q.p);if(p)p.status=S.settings.clientApprovalFlow==='Auto Project Confirmed'?'Project Confirmed':'Client Approved';}
+      });
+      save();if(showToast)toast('Customer E-sign status refreshed');if(rerender&&active==='quotation'&&qDetail)show('quotation');return rows;
+    }finally{V182_ESIGN_FETCHING=false;}
+  };
+  window.v11FetchEsignStatuses=async function(showToast=false){return v182RefreshEsignHistory(showToast,false);};
+  window.v11ManualStatusCheck=async function(){await v182RefreshEsignHistory(true,true);};
+  async function v182LoadSignatureThumb(qid,requestId){
+    const el=$('v182_signature_thumb');if(!el||!requestId)return;
+    try{let r=V182_SIG_CACHE[requestId];if(!r){r=await v11Rpc('get_my_esign_request_v17',{p_request_id:requestId},true);V182_SIG_CACHE[requestId]=r;}if(!r?.ok||r.status!=='SIGNED'||!r.signature_data){el.innerHTML='<span class="small">Signed record found. Open Signed Copy to view full evidence.</span>';return;}el.innerHTML=`<img src="${r.signature_data}" alt="Customer signature"><div><b>${esc(r.signed_by||'Customer')}</b><span>Customer E-signature returned</span>${r.signed_at?`<small>${esc(new Date(r.signed_at).toLocaleString())}</small>`:''}</div>`;}catch(e){el.innerHTML=`<span class="small">Signed status confirmed. Signature preview could not load: ${esc(e.message||'')}</span>`;}
+  }
+  window.v182OpenSignedRevision=async function(qid,requestId){const q=S.quotes.find(x=>x.id===qid);if(!q)return;const old=q.esign?{...q.esign}:null;q.esign={...(q.esign||{}),backend:true,requestId,status:'SIGNED',backendStatus:'SIGNED'};try{await v17OpenSignedQuotation(qid);}finally{if(old)q.esign=old;else delete q.esign;save();}};
+
+  function v182HistoryCell(q,version){const h=v182BestForRevision(q.esignHistory||[],version?.v);if(!h)return '<span class="small">No E-sign record</span>';const st=String(h.status||'').toUpperCase();if(st==='SIGNED')return `<span class="pill green">Signed</span> <button class="btn s" onclick="v182OpenSignedRevision('${q.id}','${h.id}')">View Signed Copy</button>`;if(st==='PENDING')return '<span class="pill orange">Awaiting Customer</span>';if(st==='EXPIRED')return '<span class="pill red">Expired</span>';if(st==='REVOKED')return '<span class="pill gray">Replaced</span>';return `<span class="small">${esc(st||'-')}</span>`;}
+
+  // Wrap quotation detail last so all v0.17 signed-copy buttons remain available.
+  const v182BaseQuoteDetail=quoteDetail;
+  quoteDetail=function(){
+    const html=v182BaseQuoteDetail(),d=document.createElement('div');d.innerHTML=html,q=S.quotes.find(x=>x.id===qDetail);if(!q)return html;
+    const meta=d.querySelector('.quoteMeta');if(meta&&V182_SCOPE?.quoteId===q.id)meta.insertAdjacentHTML('afterend',v182ScopeEditorHtml(q));
+    const historyCard=[...d.querySelectorAll('.card')].find(c=>c.querySelector('h3')?.textContent.trim()==='Sent Revision History');
+    const table=historyCard?.querySelector('table');if(table){const hr=table.querySelector('tr');if(hr&&!/[Ee]-sign/.test(hr.textContent))hr.insertAdjacentHTML('beforeend','<th>E-sign / Signed Copy</th>');[...table.querySelectorAll('tr')].slice(1).forEach((tr,n)=>{const v=q.versions?.[n];if(v&&tr.cells.length<7)tr.insertAdjacentHTML('beforeend',`<td>${v182HistoryCell(q,v)}</td>`);});}
+    const signed=(q.esignHistory||[]).filter(x=>x.status==='SIGNED').sort((a,b)=>new Date(b.signedAt||0)-new Date(a.signedAt||0))[0];
+    const pending=(q.esignHistory||[]).filter(x=>x.status==='PENDING').sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))[0];
+    if(meta){
+      if(signed){meta.insertAdjacentHTML('afterend',`<div class="goodbox v182EsignBanner"><div><b>Customer E-sign returned · ${esc(signed.revisionLabel||'')}</b><div class="small">Signed by ${esc(signed.signedBy||q.clientMeta?.name||'Customer')}${signed.signedAt?' · '+esc(new Date(signed.signedAt).toLocaleString()):''}</div><div id="v182_signature_thumb" class="v182SignatureThumb"><span class="v11Spinner"></span>Loading returned signature…</div></div><button class="btn g" onclick="v182OpenSignedRevision('${q.id}','${signed.id}')">Preview Signed Copy</button></div>`);setTimeout(()=>v182LoadSignatureThumb(q.id,signed.id),0);}
+      else if(pending)meta.insertAdjacentHTML('afterend',`<div class="soft v182EsignBanner"><div><b>Customer E-sign awaiting signature · ${esc(pending.revisionLabel||'')}</b><div class="small">Use Refresh E-sign Status after the customer signs, or return to this tab and it will refresh automatically.</div></div><button class="btn" onclick="v182RefreshEsignHistory(true,true)">Refresh E-sign Status</button></div>`);
+    }
+    if(V11_PROFILE&&(!q.esignHistoryCheckedAt||Date.now()-Number(q.esignHistoryCheckedAt)>15000))setTimeout(()=>v182RefreshEsignHistory(false,true),80);
+    return d.innerHTML;
+  };
+
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&V11_PROFILE&&qDetail)v182RefreshEsignHistory(false,true);});
+  window.addEventListener('focus',()=>{if(V11_PROFILE&&qDetail)v182RefreshEsignHistory(false,true);});
+
+  // ---------------------------------------------------------------------------
+  // E. Readable print / PDF typography. Nothing below 11pt in generated docs.
+  // ---------------------------------------------------------------------------
+  function v182PrintCss(){return `
+    @page{size:A4 portrait;margin:11mm 12mm 14mm}*{box-sizing:border-box}html,body{margin:0;padding:0;color:#111;background:#fff;font-family:Arial,sans-serif}body{font-size:11pt;line-height:1.4}.v15PrintBody{width:100%;max-width:184mm;margin:0 auto}table{width:100%;border-collapse:collapse}th,td{vertical-align:top;font-size:11pt}.previewPaper,.invoicePaper{box-shadow:none!important;border:0!important;padding:0!important;max-width:none!important;margin:0!important}.v14DocumentRoot,.v14StandaloneDoc,.v17QuoteDocument{width:100%;max-width:184mm;margin:0 auto;font-size:11pt}.v14PrintFrame{width:100%}.v14PrintFrame>thead{display:table-header-group}.v14PrintFrame>tfoot{display:table-footer-group}.v14PrintFrame>tbody{display:table-row-group}.v14PrintFrame>thead td,.v14PrintFrame>tfoot td,.v14PrintFrame>tbody td{border:0;padding:0}.v14DocHeader,.v17DocHeader{display:flex!important;justify-content:space-between;gap:12mm;align-items:flex-start;margin:0 0 4mm}.v14DocHeader img,.v17DocHeader img{width:44mm;max-height:27mm;object-fit:contain;object-position:left top}.v14DocHeader>div:last-child,.v17DocHeader>div:last-child{font-size:11pt!important;line-height:1.35!important;text-align:right;max-width:82mm}.v14QuoteInfo,.v17Info{margin:3mm 0}.v14QuoteInfo td,.v17Info td{border:1px solid #555;padding:2.1mm 2mm;font-size:11pt!important}.v14QuoteInfo td:nth-child(1),.v14QuoteInfo td:nth-child(3),.v17Info td:nth-child(1),.v17Info td:nth-child(3){font-weight:700;width:15%}.v14QuoteTitle,.v17QuoteTitle{text-align:center;text-decoration:underline;font-weight:900;font-size:15pt!important;margin:3mm 0}.v14QuoteIntro,.v17QuoteIntro{text-align:center;font-size:11pt!important;line-height:1.4!important;margin:0 4% 4mm}.v14PrintSection,.v17PrintSection{font-weight:900;font-size:13pt!important;border-top:1.4px solid #333;padding:2.5mm 1mm 1.5mm;margin-top:2.5mm}.v14PrintArea,.v17PrintArea{font-weight:800;font-size:11.5pt!important;background:#eee;padding:2mm;border:1px solid #aaa;border-bottom:0}.v14ScopeTable,.v17ScopeTable{margin-bottom:3mm;table-layout:fixed}.v14ScopeTable th,.v14ScopeTable td,.v17ScopeTable th,.v17ScopeTable td{border:1px solid #aaa;padding:2.2mm 2mm;font-size:11pt!important;vertical-align:top;line-height:1.35}.v14ScopeTable th,.v17ScopeTable th{font-weight:800}.v14ScopeTable th:last-child,.v14ScopeTable td:last-child,.v17ScopeTable th:last-child,.v17ScopeTable td:last-child{width:34mm;text-align:right}.v14PrintDesc,.v14CombinedItems span,.v15Preline,.v17ItemDesc,.v17CombinedPrintItem span{font-size:11pt!important;color:#333;margin-top:1mm;white-space:pre-line;line-height:1.4!important}.v14PrintQty,.v17Qty{display:block;font-size:11pt!important;color:#555;margin-top:1mm}.v14CombinedItems,.v17CombinedPrint{margin-top:1.5mm;line-height:1.4}.v14CombinedItems span,.v17CombinedPrintItem span{display:block;margin-left:3mm}.v14UpgradeMedia,.v17UpgradeMedia{margin:3mm 0;break-inside:avoid}.v14UpgradeMedia img,.v17UpgradeMedia img{max-width:75mm;max-height:42mm;object-fit:contain}.v14Totals,.v17Totals{width:86mm;margin:4mm 0 3mm auto}.v14Totals td,.v17Totals td{border-bottom:1px solid #ccc;padding:1.8mm 2mm;font-size:11pt!important}.v14Totals td:first-child,.v17Totals td:first-child{text-align:right;font-weight:700}.v14Totals td:last-child,.v17Totals td:last-child{text-align:right}.v14PayTitle,.v17PayTitle{font-size:12pt!important;margin:4mm 0 2mm;font-weight:800}.v14Payment td,.v17Payment td{border:1px solid #ccc;padding:2mm;font-size:11pt!important}.v14PageSignatures,.v14TermsSignatures,.v17PageSigns,.v17TermsSigns{display:grid!important;grid-template-columns:1fr 1fr!important;gap:16mm!important;align-items:start;margin-top:10mm;break-inside:avoid;page-break-inside:avoid}.v14IdSignGroup,.v17IdSigns{display:flex;gap:7mm;flex-wrap:wrap}.v14PersonSign,.v17PersonSign{min-width:55mm;line-height:1.35;font-size:11pt!important}.v14PersonSign img,.v17PersonSign img{display:block;width:48mm;height:17mm;object-fit:contain;object-position:left bottom}.v14SignLine,.v17SignLine{height:17mm;border-bottom:1px solid #222;width:50mm}.v14PersonSign b,.v14PersonSign span,.v14PersonSign small,.v17PersonSign b,.v17PersonSign span,.v17PersonSign small{display:block;font-size:11pt!important}.v14EsignMark{height:17mm;display:flex;align-items:end;font-style:italic;font-weight:700;font-size:11pt}.v14TermsPage,.v17Terms{break-before:page;page-break-before:always;margin:0;padding-top:0}.v14TermsPage h2,.v17Terms h2{text-align:center;font-size:16pt!important}.v14TermsText,.v17TermsText{font-size:11pt!important;line-height:1.5!important;white-space:pre-line}.v14TermsSignatures h4,.v17TermsSigns h4{font-size:12pt!important}.v14ScopeTable tr,.v17ScopeTable tr,.v14UpgradeMedia,.v17UpgradeMedia{break-inside:avoid;page-break-inside:avoid}.v14StandaloneTitle,.invoiceTitle{font-size:16pt!important;font-weight:900}.v14StandaloneDoc p,.v14StandaloneDoc li,.invoiceCompany,.invoiceMetaBox,.invoiceTable th,.invoiceTable td,.invoiceTotals td,.invoiceFooter{font-size:11pt!important;line-height:1.45}.invoiceHeader{display:grid;grid-template-columns:1fr 1fr;gap:10mm;align-items:start}.invoiceHeader img{width:44mm;height:25mm;object-fit:contain}button,.btn,.v14PreviewActions,.v17PublicToolbar,.v17PublicSignPanel{display:none!important}`;}
+  function v182WaitImages(doc){return Promise.all([...doc.images].map(img=>img.complete?Promise.resolve():new Promise(res=>{img.onload=img.onerror=res;})));}
+  printDoc=function(t,b){
+    const old=document.getElementById('v182_print_frame');if(old)old.remove();const f=document.createElement('iframe');f.id='v182_print_frame';f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:.001;pointer-events:none;z-index:-1';document.body.appendChild(f);const d=f.contentDocument,w=f.contentWindow;d.open();d.write(`<!doctype html><html><head><meta charset="utf-8"><base href="${esc(location.href)}"><title>${esc(t)}</title><style>${v182PrintCss()}</style></head><body><div class="v15PrintBody">${b}</div></body></html>`);d.close();const cleanup=()=>setTimeout(()=>{try{f.remove();}catch(_){}},300);v182WaitImages(d).finally(()=>setTimeout(()=>{try{w.focus();w.addEventListener('afterprint',cleanup,{once:true});w.print();setTimeout(cleanup,60000);}catch(e){cleanup();toast('Unable to open print preview');console.error(e);}},180));
+  };
+
+  // ---------------------------------------------------------------------------
+  // F. UI styling: full-width inline editor, readable custom service picker,
+  //    unified normal/combined cards, returned signature banner, 11pt documents.
+  // ---------------------------------------------------------------------------
+  const css=document.createElement('style');css.textContent=`
+    .v182ScopeEditor{margin:14px 0 18px;border:1px solid #DDBE89;box-shadow:0 12px 28px rgba(23,32,42,.08);scroll-margin-top:14px}.v182ScopeEditor h2{margin:6px 0 3px}.v182ScopeGuide{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-radius:11px;background:#F8F0E4;color:#6F4E22;margin:12px 0}.v182ScopeTop{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;align-items:end}.v182CombinedBox{display:grid;grid-template-columns:1.5fr 1fr;gap:10px;background:#FFF8E9;border:1px solid #EAD3A9;border-radius:12px;padding:12px;margin:12px 0}.v182ItemsToolbar{display:flex;justify-content:space-between;gap:12px;align-items:end;margin:16px 0 10px}.v182ScopeRows{display:grid;gap:12px}.v182ScopeRow{border:1px solid var(--l);border-radius:14px;padding:13px;background:#fff;overflow:visible}.v182ScopeRowTop{display:flex;justify-content:space-between;gap:10px;margin-bottom:9px}.v182MainFields{display:grid;grid-template-columns:minmax(320px,1fr) minmax(360px,1.25fr);gap:12px}.v182NumberFields{display:grid;grid-template-columns:.65fr .8fr 1.15fr 1fr 1.1fr;gap:10px;margin-top:10px}.v182ServiceField{position:relative}.v182ServiceResults{display:none;position:absolute;left:0;right:0;top:100%;z-index:80;background:#17202A;border:1px solid #344054;border-radius:10px;box-shadow:0 16px 35px rgba(0,0,0,.24);max-height:360px;overflow:auto;padding:5px}.v182ServiceResults.show{display:block}.v182ServiceResults button{display:block;width:100%;border:0;border-bottom:1px solid rgba(255,255,255,.09);background:transparent;color:#fff;text-align:left;padding:10px 11px;white-space:normal;line-height:1.35;cursor:pointer}.v182ServiceResults button:hover{background:#263445}.v182ServiceResults button b,.v182ServiceResults button span,.v182ServiceResults button small{display:block}.v182ServiceResults button span{font-size:12px;color:#D4DAE3;margin-top:3px}.v182ServiceResults button small{font-size:11px;color:#AEB8C7;margin-top:4px}.v182NoService{padding:12px;color:#D4DAE3;font-size:12px}.v182ScopeActions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.v182ServiceStats{display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:9px;margin-top:12px}.v182ServiceStat{border:1px solid var(--l);border-radius:12px;background:#fff;padding:11px;text-align:left;cursor:pointer}.v182ServiceStat:hover{border-color:#C7A46A;background:#FFFCF7}.v182ServiceStat b,.v182ServiceStat span{display:block}.v182ServiceStat span{font-size:12px;color:#667085;margin-top:3px}.v182ServiceManageList{display:grid;gap:9px;margin-top:12px;max-height:60vh;overflow:auto}.v182ServiceManageRow{display:flex;justify-content:space-between;gap:14px;border:1px solid var(--l);border-radius:11px;padding:11px;background:#fff;align-items:flex-start}.v182ServiceManageRow.isOff{opacity:.58;background:#F7F7F7}.v182Pre{white-space:pre-line;margin:4px 0}.v182EsignBanner{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-top:12px}.v182SignatureThumb{display:flex;gap:12px;align-items:center;margin-top:9px}.v182SignatureThumb img{width:150px;height:54px;object-fit:contain;object-position:left center;border:1px solid #D7E9DF;border-radius:8px;background:#fff}.v182SignatureThumb span,.v182SignatureThumb small{display:block}.v14BuilderArea{padding:10px;display:grid;gap:9px}.v14BuilderLine,.v14CombinedCard{border:1px solid #E7D9C5!important;border-radius:12px!important;background:#FFFDFC!important;padding:12px!important;margin:0!important}.v14BuilderLine{grid-template-columns:minmax(0,1fr) auto auto!important;gap:12px!important;align-items:center!important}.v14CombinedCard .v14CombinedHead{margin-bottom:6px}.v14BuilderLine .desc,.v14CombinedList .v17CombinedDesc{white-space:pre-wrap!important;line-height:1.45}.v14DocumentRoot,.v14PublicQuoteDoc,.v17QuoteDocument{font-size:11pt!important}.v14DocHeader>div:last-child,.v17DocHeader>div,.v14QuoteInfo td,.v17Info td,.v14QuoteIntro,.v17QuoteIntro,.v14ScopeTable th,.v14ScopeTable td,.v17ScopeTable th,.v17ScopeTable td,.v14PrintDesc,.v17ItemDesc,.v14CombinedItems span,.v17CombinedPrintItem span,.v14PrintQty,.v17Qty,.v14Payment td,.v17Payment td,.v14PersonSign b,.v14PersonSign span,.v14PersonSign small,.v17PersonSign b,.v17PersonSign span,.v17PersonSign small,.v14TermsText,.v17TermsText{font-size:11pt!important}.v14QuoteTitle,.v17QuoteTitle{font-size:15pt!important}.v14PrintSection,.v17PrintSection{font-size:13pt!important}.v14PrintArea,.v17PrintArea{font-size:11.5pt!important}.v14TermsPage h2,.v17Terms h2{font-size:16pt!important}.v14PayTitle,.v17PayTitle{font-size:12pt!important}.v14ScopeTable,.v17ScopeTable{table-layout:fixed}.v14ScopeTable th:last-child,.v14ScopeTable td:last-child,.v17ScopeTable th:last-child,.v17ScopeTable td:last-child{width:34mm}.v17PublicPaper{width:min(980px,100%)}
+    @media(max-width:1050px){.v182ScopeTop{grid-template-columns:1fr 1fr}.v182MainFields{grid-template-columns:1fr}.v182NumberFields{grid-template-columns:repeat(3,1fr)}.v182ServiceStats{grid-template-columns:1fr 1fr}.v14BuilderLine{grid-template-columns:1fr!important}}
+    @media(max-width:650px){.v182ScopeTop,.v182NumberFields,.v182ServiceStats{grid-template-columns:1fr}.v182CombinedBox{grid-template-columns:1fr}.v182ItemsToolbar,.v182EsignBanner,.v182ServiceManageRow{display:block}.v182ItemsToolbar .btn,.v182EsignBanner .btn{margin-top:9px;width:100%}.v182MainFields{grid-template-columns:1fr}.v182ServiceResults{position:relative;top:auto;margin-top:4px;max-height:300px}.v182SignatureThumb{align-items:flex-start;flex-direction:column}}
+  `;document.head.appendChild(css);
+
+  const v182BaseLayout=layout;
+  layout=function(){v182BaseLayout();const n=document.querySelector('.side .note');if(n)n.innerHTML='<b>v0.18.2 Quotation UX + Signed Copy</b><br>Inline quotation scope editing, Work-Section service library, returned customer signatures, signed revision history and readable 11pt customer documents.';};
+  document.title='Brick & Decor PWA v0.18.2 Quotation UX + Signed Copy';
+})();
+
 </script>
 <script>if($('modal'))$('modal').onclick=e=>{if(e.target.id=='modal')closeModal()};
 Promise.resolve().then(()=>v11Boot()).catch(e=>{console.error('B&D startup failed',e);document.body.innerHTML=`<div class="v11Loading"><div><h2>Unable to start B&D</h2><p>${String(e?.message||e||'Unknown startup error')}</p><button class="btn p" onclick="location.reload()">Retry</button></div></div>`;});

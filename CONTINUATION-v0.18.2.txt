@@ -1,0 +1,28 @@
+BRICK & DECOR PWA — CONTINUATION HANDOFF v0.18.2
+================================================
+Baseline: v0.18.1 Work-Section Service Filter.
+Patch: v0.18.2 Quotation UX + Signed Copy.
+
+Completed in source/package:
+- Companies menu moved below Master Data.
+- Quotation scope Add/Edit moved from modal to full-width inline editor.
+- Readable searchable service chooser, filtered by Work Section.
+- Persistent Quotation Service Library in Master Data; old Item Master and redundant Company Document Templates card hidden.
+- Normal and Combined Amount builder cards visually aligned.
+- Professional Services remains low in PWA working view but is first in customer-facing documents.
+- Professional Services customer output removes unnecessary Unassigned Area heading.
+- Print/PDF/customer/signed document typography raised to minimum 11pt for normal text.
+- Returned customer E-sign status refreshes on focus/visibility return.
+- Signed customer signature thumbnail is retrieved securely in staff quotation view.
+- Sent Revision History has per-revision E-sign/Signed Copy access.
+- SQL 08 adds authorised signed-revision request listing.
+
+New backend step:
+- Run 08_v0.18.2_signed_revision_history.sql once.
+- No new Edge Function.
+
+Test URL:
+https://romulas-oh.github.io/brick-decor-pwa-test/?v=0183
+
+Next planned area after this round is verified:
+Supplier Invoice -> Work Section allocation -> Project Cost / profit flow.
