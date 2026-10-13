@@ -25,7 +25,7 @@ as $$
   select
     e.id,
     q.quotation_no,
-    e.revision_id,
+    e.quotation_revision_id,
     r.revision_no,
     r.revision_label,
     case
@@ -37,7 +37,7 @@ as $$
     e.signed_by,
     e.created_at
   from public.esign_requests e
-  join public.quotation_revisions r on r.id=e.revision_id
+  join public.quotation_revisions r on r.id=e.quotation_revision_id
   join public.quotations q on q.id=r.quotation_id
   where auth.uid() is not null
     and private.can_access_case(e.case_id)
