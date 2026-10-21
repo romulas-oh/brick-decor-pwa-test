@@ -1,4 +1,4 @@
-const CACHE='bd-pwa-v0.18.2-quotation-ux-signed-copy';
+const CACHE='bd-pwa-v0.18.4-no-jump-quotation-editor';
 const CORE=['./index.html','./manifest.json','./assets/icon.svg','./assets/brick-decor-central.jpeg','./assets/bd-werks.png','./assets/brick-decor-north.png','./assets/arc-brush.jpg','./assets/excel-mola-fermi-upgrade.png','./assets/nippon-anti-mould-upgrade.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).catch(()=>{}));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});

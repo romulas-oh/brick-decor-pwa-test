@@ -1,0 +1,17 @@
+Brick & Decor PWA continuation — v0.18.4
+
+Latest package: v0.18.4 No-Jump Quotation Editor
+Backend: Supabase. SQL 09 restored get_my_esign_request_v17 and get_my_document_esign_request_v17. SQL 08 installed list_my_esign_requests_v182.
+
+Key change in v0.18.4:
+- Quotation Edit/Add Scope editor now opens directly in the existing page DOM instead of calling show('quotation') and forcing the page back to top.
+- Cancel does not re-render.
+- Save restores prior scroll position after re-render.
+- Floating Add Scope remains available.
+
+Next testing:
+1. Confirm edit near bottom no longer jumps to top.
+2. Confirm Cancel stays in place.
+3. Confirm Save returns to same place.
+4. Confirm Preview Signed Copy now opens and displays customer signature.
+5. After these pass, continue Supplier Invoice / Project Cost workflow testing.

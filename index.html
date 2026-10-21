@@ -3053,19 +3053,24 @@ async function v11Boot(){
   // C. Inline quotation scope editor — replaces the cramped modal.
   // ---------------------------------------------------------------------------
   let V182_SCOPE=null,V182_SEQ=0;
+  function v182ScrollTop(){const sc=document.scrollingElement||document.documentElement;return Number(sc?.scrollTop||window.scrollY||0);}
+  function v182RestoreScroll(y){const sc=document.scrollingElement||document.documentElement,apply=()=>{if(sc)sc.scrollTop=y;window.scrollTo(0,y);};requestAnimationFrame(()=>{apply();requestAnimationFrame(apply);});setTimeout(apply,70);setTimeout(apply,180);setTimeout(apply,360);}
   function v182EmptyScope(){return {quoteId:qDetail,groupId:'',itemIndex:-1,section:(S.settings.scopeSections||[])[0]||'',area:'',mode:'Individual Amount',label:'',amount:0,rows:[{}]};}
   function v182OpenScope(opts={}){
     const q=S.quotes.find(x=>x.id===qDetail);if(!q)return;
     const st=v182EmptyScope();st.groupId=opts.groupId||'';st.itemIndex=Number.isInteger(opts.itemIndex)?opts.itemIndex:-1;
     if(st.groupId){const ch=q.items.find(i=>i.lumpGroupId===st.groupId&&(i.isLumpCharge||String(i.pricingType||'').startsWith('Lump Sum:'))),mem=q.items.filter(i=>i.lumpGroupId===st.groupId&&!i.isLumpCharge&&!String(i.pricingType||'').startsWith('Lump Sum:'));if(ch){st.section=ch.section||st.section;st.area=ch.area||'';st.mode='Combined Amount';st.label=ch.lumpGroupLabel||ch.name||'';st.amount=Number(ch.price||0);st.rows=mem.map(x=>({...x}));}}
     else if(st.itemIndex>=0){const i=q.items[st.itemIndex];if(!i)return;st.section=i.section||st.section;st.area=i.area||'';st.rows=[{...i}];}
-    V182_SCOPE=st;show('quotation');setTimeout(()=>document.getElementById('v182_scope_editor')?.scrollIntoView({behavior:'smooth',block:'start'}),40);
+    V182_SCOPE=st;
+    const oldHost=document.getElementById('v182_scope_host');if(oldHost)oldHost.remove();
+    const host=document.createElement('div');host.id='v182_scope_host';host.innerHTML=v182ScopeEditorHtml(q);($('content')||document.body).appendChild(host);
+    setTimeout(()=>{try{v182PriceModeChanged();}catch(_){}},0);
   }
   window.v182OpenScopeEditor=function(){v182OpenScope({});};
   addQItem=function(){v182OpenScope({});};
   window.v13EditLumpGroup=function(gid){v182OpenScope({groupId:gid});};
   editQuoteItem=function(n){const q=S.quotes.find(x=>x.id===qDetail),i=q?.items?.[n];if(!i)return;if(i.standardFixed)return toast('Use Edit Services in Professional Services to change the standard section');if(i.lumpGroupId)return v182OpenScope({groupId:i.lumpGroupId});v182OpenScope({itemIndex:n});};
-  window.v182CancelScope=function(){V182_SCOPE=null;show('quotation');};
+  window.v182CancelScope=function(){V182_SCOPE=null;document.getElementById('v182_scope_host')?.remove();document.getElementById('v182_scope_editor')?.remove();};
 
   function v182SectionOptions(current){return (S.settings.scopeSections||[]).map(s=>`<option value="${esc(s)}" ${v182Canonical(s)===v182Canonical(current)?'selected':''}>${esc(s)}</option>`).join('')+`<option value="__custom" ${current&&!(S.settings.scopeSections||[]).some(s=>v182Canonical(s)===v182Canonical(current))?'selected':''}>+ Custom Work Section</option>`;}
   function v182AreaOptions(q){return [...new Set([...(S.settings.areaLocations||[]),...(q?.items||[]).map(i=>i.area).filter(Boolean)])].map(a=>`<option value="${esc(a)}"></option>`).join('');}
@@ -3106,7 +3111,7 @@ async function v11Boot(){
       rows.forEach(r=>q.items.push({...r,custom:!known(r.name),cat:section,area,section,price:0,pricingType:`Included:${gid}`,lumpGroupId:gid,lumpGroupLabel:label,lumpGroupAmount:amount}));
       q.items.push({custom:true,name:label,cat:section,desc:'',unit:'Lot',qty:1,cost:0,price:amount,area,section,pricingType:`Lump Sum:${gid}`,isLumpCharge:true,lumpGroupId:gid,lumpGroupLabel:label,lumpGroupAmount:amount,lumpCost:costTotal});
     }else rows.forEach(r=>q.items.push({...r,custom:!known(r.name),cat:section,area,section}));
-    V182_SCOPE=null;save();toast(mode==='Combined Amount'?'Combined amount scope saved':'Quotation scope saved');show('quotation');
+    const returnY=v182ScrollTop();V182_SCOPE=null;document.getElementById('v182_scope_host')?.remove();save();toast(mode==='Combined Amount'?'Combined amount scope saved':'Quotation scope saved');show('quotation');v182RestoreScroll(returnY);
   };
 
   // ---------------------------------------------------------------------------
@@ -3191,6 +3196,66 @@ async function v11Boot(){
   document.title='Brick & Decor PWA v0.18.2 Quotation UX + Signed Copy';
 })();
 
+</script>
+<script>
+/* Brick & Decor PWA v0.18.4 — no-jump quotation editor + signed-copy RPC recovery */
+(function(){
+  let v183ReturnY=0;
+  const v183Remember=()=>{v183ReturnY=window.scrollY||document.documentElement.scrollTop||0;};
+  const v183Restore=(delay=110)=>setTimeout(()=>window.scrollTo({top:v183ReturnY,left:0,behavior:'auto'}),delay);
+
+  // Keep the user's place in a long quotation. v0.18.2 intentionally moved the
+  // editor to the top of the quotation; v0.18.3 turns it into a viewport drawer
+  // and cancels the old forced scroll-to-top behaviour from the user's viewpoint.
+  const baseOpen=window.v182OpenScopeEditor;
+  if(typeof baseOpen==='function')window.v182OpenScopeEditor=function(){v183Remember();const r=baseOpen.apply(this,arguments);v183Restore();return r;};
+  const baseAdd=window.addQItem||addQItem;
+  if(typeof baseAdd==='function')addQItem=function(){v183Remember();const r=baseAdd.apply(this,arguments);v183Restore();return r;};
+  const baseEdit=window.editQuoteItem||editQuoteItem;
+  if(typeof baseEdit==='function')editQuoteItem=function(){v183Remember();const r=baseEdit.apply(this,arguments);v183Restore();return r;};
+  const baseGroup=window.v13EditLumpGroup;
+  if(typeof baseGroup==='function')window.v13EditLumpGroup=function(){v183Remember();const r=baseGroup.apply(this,arguments);v183Restore();return r;};
+  const baseSave=window.v182SaveScope;
+  if(typeof baseSave==='function')window.v182SaveScope=function(){const y=v183ReturnY;const r=baseSave.apply(this,arguments);setTimeout(()=>window.scrollTo({top:y,left:0,behavior:'auto'}),90);return r;};
+  const baseCancel=window.v182CancelScope;
+  if(typeof baseCancel==='function')window.v182CancelScope=function(){const y=v183ReturnY;const r=baseCancel.apply(this,arguments);setTimeout(()=>window.scrollTo({top:y,left:0,behavior:'auto'}),90);return r;};
+
+  // Always-available Add Scope button while reviewing a long quotation.
+  const baseQuoteDetail=quoteDetail;
+  quoteDetail=function(){
+    const html=baseQuoteDetail(),d=document.createElement('div');d.innerHTML=html;
+    if(qDetail&&!d.querySelector('#v182_scope_editor')){
+      d.insertAdjacentHTML('beforeend','<button id="v183_float_add" class="btn p v183FloatAdd" onclick="v182OpenScopeEditor()">+ Add Work Section / Area</button>');
+    }
+    return d.innerHTML;
+  };
+
+  // Escape closes only the quotation editor when it is open.
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('v182_scope_editor')&&typeof v182CancelScope==='function')v182CancelScope();});
+
+  const css=document.createElement('style');css.textContent=`
+    .v183FloatAdd{position:fixed;right:24px;bottom:24px;z-index:850;box-shadow:0 10px 28px rgba(15,23,42,.22);border-radius:999px;padding:11px 16px}
+    .v182ScopeEditor{position:fixed!important;top:78px!important;right:18px!important;width:min(660px,calc(100vw - 270px))!important;max-height:calc(100vh - 96px)!important;overflow:auto!important;z-index:920!important;margin:0!important;padding:14px!important;border:1px solid #DDBE89!important;border-radius:16px!important;box-shadow:0 18px 55px rgba(15,23,42,.28)!important;background:#FFFEFC!important;overscroll-behavior:contain}
+    .v182ScopeEditor .sectionToolbar{position:sticky;top:-14px;z-index:8;background:#FFFEFC;padding:10px 2px 9px;margin:-6px 0 8px;border-bottom:1px solid #E8DED0;align-items:center}
+    .v182ScopeEditor .sectionToolbar h2{font-size:18px;margin:3px 0 0}.v182ScopeEditor .sectionToolbar p{display:none}
+    .v182ScopeEditor .v182ScopeGuide{font-size:11px;padding:7px 9px;margin:7px 0 9px;gap:5px}
+    .v182ScopeEditor .v182ScopeTop{grid-template-columns:1fr 1fr!important;gap:8px!important}.v182ScopeEditor .v182ScopeTop .field:nth-child(3),.v182ScopeEditor .v182ScopeTop .field:nth-child(4){margin-top:0}
+    .v182ScopeEditor .v182CombinedBox{grid-template-columns:1fr 1fr!important;padding:9px!important;margin:9px 0!important}
+    .v182ScopeEditor .v182ItemsToolbar{margin:10px 0 7px!important;align-items:center}.v182ScopeEditor .v182ItemsToolbar h3{font-size:15px;margin:0}.v182ScopeEditor .v182ItemsToolbar p{margin:3px 0 0}
+    .v182ScopeEditor .v182ScopeRows{gap:8px!important}.v182ScopeEditor .v182ScopeRow{padding:10px!important;border-radius:11px!important}.v182ScopeEditor .v182ScopeRowTop{margin-bottom:6px!important}
+    .v182ScopeEditor .v182MainFields{grid-template-columns:1fr!important;gap:7px!important}.v182ScopeEditor textarea{min-height:70px!important;resize:vertical}
+    .v182ScopeEditor .v182NumberFields{grid-template-columns:.65fr .8fr 1.25fr 1fr 1.1fr!important;gap:7px!important;margin-top:7px!important}
+    .v182ScopeEditor .field label{font-size:10px!important;margin-bottom:3px!important}.v182ScopeEditor input,.v182ScopeEditor select,.v182ScopeEditor textarea{padding:8px 9px!important}
+    .v182ScopeEditor .v182ScopeActions{position:sticky;bottom:-14px;z-index:8;background:#FFFEFC;border-top:1px solid #E8DED0;margin:10px -2px -6px!important;padding:10px 2px 6px!important}
+    .v182ScopeEditor .v182ServiceResults{max-height:250px!important}
+    @media(max-width:900px){.v182ScopeEditor{top:66px!important;right:8px!important;left:8px!important;width:auto!important;max-height:calc(100vh - 78px)!important}.v183FloatAdd{right:14px;bottom:14px}.v182ScopeEditor .v182NumberFields{grid-template-columns:repeat(3,1fr)!important}}
+    @media(max-width:620px){.v182ScopeEditor{top:58px!important}.v182ScopeEditor .v182ScopeTop,.v182ScopeEditor .v182NumberFields,.v182ScopeEditor .v182CombinedBox{grid-template-columns:1fr!important}.v182ScopeEditor .v182ScopeGuide{display:none}.v183FloatAdd{left:12px;right:12px;width:calc(100% - 24px)}}
+  `;document.head.appendChild(css);
+
+  const baseLayout=layout;
+  layout=function(){baseLayout();const n=document.querySelector('.side .note');if(n)n.innerHTML='<b>v0.18.4 No-Jump Quotation Editor</b><br>Edit/Add Scope opens in-place without rebuilding the quotation page, Save returns to the same scroll position, and signed-copy recovery remains included.';};
+  document.title='Brick & Decor PWA v0.18.4 No-Jump Quotation Editor';
+})();
 </script>
 <script>if($('modal'))$('modal').onclick=e=>{if(e.target.id=='modal')closeModal()};
 Promise.resolve().then(()=>v11Boot()).catch(e=>{console.error('B&D startup failed',e);document.body.innerHTML=`<div class="v11Loading"><div><h2>Unable to start B&D</h2><p>${String(e?.message||e||'Unknown startup error')}</p><button class="btn p" onclick="location.reload()">Retry</button></div></div>`;});

@@ -1,0 +1,15 @@
+Brick & Decor PWA continuation — v0.18.3
+
+Current patch focus:
+- Signed Copy error traced to missing public.get_my_esign_request_v17 RPC.
+- SQL 09 restores quotation/document signed-copy read RPCs and reloads PostgREST schema.
+- Quotation Add/Edit editor converted to compact fixed drawer with independent scrolling.
+- Edit/Add/Save/Cancel preserve the user's scroll position in long quotations.
+- Floating Add Work Section / Area button remains accessible while scrolling.
+
+Still retained from v0.18.2:
+- Work Section filtered quotation service library.
+- Professional Services at bottom in PWA but first in customer-facing documents.
+- Returned E-sign status and signed revision history.
+- Minimum 11pt generated-document print typography.
+- Secure Supabase user admin.
