@@ -1,0 +1,216 @@
+/* Brick & Decor PWA v0.18.5 — centered responsive quotation scope modal.
+   Scoped to the v0.18.4 editor host: no other dialogs, signatures,
+   quotations, service library forms, or printed documents are changed. */
+#v182_scope_host {
+  position: fixed;
+  inset: 0;
+  z-index: 1900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 18px;
+  background: rgba(10, 18, 30, .69);
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+#v182_scope_host > .v182ScopeEditor {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  flex: 0 1 1160px;
+  width: min(1160px, 90vw) !important;
+  max-width: 1160px !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: 90vh !important;
+  max-height: 90dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  border: 1px solid #d5bd9d !important;
+  border-radius: 18px !important;
+  background: #fffefc !important;
+  box-shadow: 0 25px 85px rgba(0, 0, 0, .42) !important;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+#v182_scope_host .v182ScopeEditor > :not(.sectionToolbar):not(.v182ScopeActions) {
+  margin-left: 22px;
+  margin-right: 22px;
+}
+#v182_scope_host .v182ScopeEditor > .sectionToolbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 !important;
+  padding: 14px 22px !important;
+  border-bottom: 1px solid #e8ded0;
+  background: #fffefc !important;
+  box-shadow: 0 3px 12px rgba(15,23,42,.045);
+}
+#v182_scope_host .v182ScopeEditor > .sectionToolbar > div {min-width: 0;}
+#v182_scope_host .v182ScopeEditor > .sectionToolbar h2 {
+  margin: 5px 0 0;
+  font-size: 22px;
+  line-height: 1.22;
+}
+#v182_scope_host .v182ScopeEditor > .sectionToolbar > button {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px !important;
+  font-size: 0 !important;
+  line-height: 1 !important;
+  border-radius: 10px;
+}
+#v182_scope_host .v182ScopeEditor > .sectionToolbar > button::before {
+  content: '\00D7';
+  display: inline-block;
+  font-size: 28px;
+  font-weight: 400;
+}
+#v182_scope_host .v182ScopeEditor .v182ScopeGuide {
+  padding: 10px 12px;
+  margin-top: 15px !important;
+  margin-bottom: 15px !important;
+  font-size: 13px;
+}
+#v182_scope_host .v182ScopeEditor .v182ScopeTop {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+#v182_scope_host .v182ScopeEditor .v182CombinedBox {
+  grid-template-columns: 1.3fr 1fr !important;
+  padding: 14px !important;
+  margin-top: 14px !important;
+  margin-bottom: 14px !important;
+}
+#v182_scope_host .v182ScopeEditor .v182ItemsToolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 17px !important;
+  margin-bottom: 12px !important;
+}
+#v182_scope_host .v182ScopeEditor .v182ItemsToolbar > div {min-width: 0; flex: 1;}
+#v182_scope_host .v182ScopeEditor .v182ItemsToolbar > button {flex: 0 0 auto;}
+#v182_scope_host .v182ScopeEditor .v182ScopeRows {gap: 12px !important;}
+#v182_scope_host .v182ScopeEditor .v182ScopeRow {padding: 15px !important;}
+#v182_scope_host .v182ScopeEditor .v182MainFields {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.15fr) !important;
+  gap: 14px !important;
+}
+#v182_scope_host .v182ScopeEditor .v182NumberFields {
+  grid-template-columns: .65fr .8fr 1.25fr 1fr 1.1fr !important;
+  gap: 10px !important;
+  margin-top: 12px !important;
+}
+#v182_scope_host .v182ScopeEditor .field,
+#v182_scope_host .v182ScopeEditor .v182MainFields > *,
+#v182_scope_host .v182ScopeEditor .v182NumberFields > * {min-width: 0;}
+#v182_scope_host .v182ScopeEditor .field label {
+  font-size: 12px !important;
+  line-height: 1.35;
+  margin-bottom: 5px !important;
+  overflow-wrap: anywhere;
+}
+#v182_scope_host .v182ScopeEditor input,
+#v182_scope_host .v182ScopeEditor select,
+#v182_scope_host .v182ScopeEditor textarea {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 10px 11px !important;
+  font-size: 14px;
+  line-height: 1.45;
+}
+#v182_scope_host .v182ScopeEditor .v182ServiceField textarea {
+  display: block;
+  min-height: 64px !important;
+  resize: vertical;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+#v182_scope_host .v182ScopeEditor .v182ServiceResults {
+  max-height: 290px !important;
+  overflow-x: hidden;
+}
+#v182_scope_host .v182ScopeEditor .v182ServiceResults button,
+#v182_scope_host .v182ScopeEditor .v182ServiceResults button b,
+#v182_scope_host .v182ScopeEditor .v182ServiceResults button span {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+#v182_scope_host .v182ScopeEditor .v182ServiceResults button {font-size: 13px;}
+#v182_scope_host .v182ScopeEditor > .v182ScopeActions {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 45 !important;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 0 !important;
+  padding: 14px 22px !important;
+  border-top: 1px solid #e8ded0;
+  background: #fffefc !important;
+  box-shadow: 0 -4px 14px rgba(15,23,42,.06);
+}
+#v182_scope_host .v182ScopeEditor > .v182ScopeActions .btn {min-height: 42px;}
+
+@media (max-width: 900px) {
+  #v182_scope_host > .v182ScopeEditor {
+    width: 94vw !important;
+    max-height: 90vh !important;
+    max-height: 90dvh !important;
+  }
+  #v182_scope_host .v182ScopeEditor .v182NumberFields {
+    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+  }
+}
+@media (max-width: 620px) {
+  #v182_scope_host {padding: 8px;}
+  #v182_scope_host > .v182ScopeEditor {
+    width: 96vw !important;
+    max-height: 90vh !important;
+    max-height: 90dvh !important;
+    border-radius: 12px !important;
+  }
+  #v182_scope_host .v182ScopeEditor > .sectionToolbar {padding: 12px 14px !important;}
+  #v182_scope_host .v182ScopeEditor > .sectionToolbar h2 {font-size: 18px;}
+  #v182_scope_host .v182ScopeEditor > :not(.sectionToolbar):not(.v182ScopeActions) {
+    margin-left: 14px;
+    margin-right: 14px;
+  }
+  #v182_scope_host .v182ScopeEditor .v182ScopeGuide {display: none;}
+  #v182_scope_host .v182ScopeEditor .v182ScopeTop,
+  #v182_scope_host .v182ScopeEditor .v182CombinedBox,
+  #v182_scope_host .v182ScopeEditor .v182MainFields,
+  #v182_scope_host .v182ScopeEditor .v182NumberFields {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+  #v182_scope_host .v182ScopeEditor .v182ItemsToolbar {display: flex; flex-direction: column; align-items: stretch;}
+  #v182_scope_host .v182ScopeEditor .v182ItemsToolbar > button {width: 100%;}
+  #v182_scope_host .v182ScopeEditor > .v182ScopeActions {
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom,0px)) !important;
+    gap: 10px;
+  }
+  #v182_scope_host .v182ScopeEditor > .v182ScopeActions > button {flex: 1 1 0; min-width: 0;}
+  #v182_scope_host .v182ScopeEditor .v182ServiceResults {position: relative; top: auto; max-height: 245px !important;}
+}

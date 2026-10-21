@@ -3253,10 +3253,12 @@ async function v11Boot(){
   `;document.head.appendChild(css);
 
   const baseLayout=layout;
-  layout=function(){baseLayout();const n=document.querySelector('.side .note');if(n)n.innerHTML='<b>v0.18.4 No-Jump Quotation Editor</b><br>Edit/Add Scope opens in-place without rebuilding the quotation page, Save returns to the same scroll position, and signed-copy recovery remains included.';};
-  document.title='Brick & Decor PWA v0.18.4 No-Jump Quotation Editor';
+  layout=function(){baseLayout();const n=document.querySelector('.side .note');if(n)n.innerHTML='<b>v0.18.5 Centered Quotation Editor</b><br>Edit/Add Scope opens in-place without rebuilding the quotation page, Save returns to the same scroll position, and signed-copy recovery remains included.';};
+  document.title='Brick & Decor PWA v0.18.5 Centered Quotation Editor';
 })();
 </script>
+<link rel="stylesheet" href="./src/v185-scope-modal.css?v=0185">
+<script src="./src/v185-scope-modal.js?v=0185"></script>
 <script>if($('modal'))$('modal').onclick=e=>{if(e.target.id=='modal')closeModal()};
 Promise.resolve().then(()=>v11Boot()).catch(e=>{console.error('B&D startup failed',e);document.body.innerHTML=`<div class="v11Loading"><div><h2>Unable to start B&D</h2><p>${String(e?.message||e||'Unknown startup error')}</p><button class="btn p" onclick="location.reload()">Retry</button></div></div>`;});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('Service worker registration failed',e));
